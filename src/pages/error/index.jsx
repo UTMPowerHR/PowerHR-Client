@@ -23,7 +23,7 @@ function ErrorPage() {
         }
     }
 
-    return <div>Something went wrong</div>;
+    return <Page401 />;
 }
 
 export default ErrorPage;
