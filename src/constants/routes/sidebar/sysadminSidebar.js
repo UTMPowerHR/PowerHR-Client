@@ -1,3 +1,3 @@
-const systemAdminSection = []
+const systemAdminSection = [];
 
-export default systemAdminSection
+export default systemAdminSection;

@@ -1,3 +1,3 @@
-const applicantSection = []
+const applicantSection = [];
 
-export default applicantSection
+export default applicantSection;

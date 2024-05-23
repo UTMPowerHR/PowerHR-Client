@@ -9,6 +9,7 @@
         "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
         "preview": "vite preview",
         "prettier": "prettier --config .prettierrc --write .",
+        "prettier:check": "prettier --config .prettierrc --check .",
         "prepare": "husky install"
     },
     "dependencies": {
