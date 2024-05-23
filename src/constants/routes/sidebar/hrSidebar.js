@@ -1,3 +1,3 @@
-const hrSection = []
+const hrSection = [];
 
 export default hrSection;

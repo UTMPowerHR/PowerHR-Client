@@ -1,3 +1,3 @@
-const adminSection = []
+const adminSection = [];
 
-export default adminSection
+export default adminSection;
