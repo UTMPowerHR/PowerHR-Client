@@ -1,3 +1,3 @@
-const employeeSection = []
+const employeeSection = [];
 
-export default employeeSection
+export default employeeSection;

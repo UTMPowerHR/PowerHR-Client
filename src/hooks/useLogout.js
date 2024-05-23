@@ -1,9 +1,9 @@
 // import { logout as logoutThunk } from '../features/authentication/authSlice';
 // import { useLogoutMutation } from '../features/authentication/authApiSlice';
-import { useDispatch } from 'react-redux';
+// import { useDispatch } from 'react-redux';
 
 const useLogout = () => {
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch();
     //const [logout] = useLogoutMutation();
 
     const logoutUser = async () => {

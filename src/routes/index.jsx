@@ -7,10 +7,10 @@ import ErrorPage from '../pages/error';
 
 const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route element={<LoadingPage />} errorElement={<ErrorPage />}>
+        <Route element={<LoadingPage />}>
             {publicRoutes}
             {privateRoutes}
-            <Route path="*" element={<>404</>} />
+            <Route path="*" element={<ErrorPage />} />
         </Route>,
     ),
 );

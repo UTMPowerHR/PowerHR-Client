@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { Box, Button, Container, Typography, useMediaQuery, CardMedia } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import PATHS from '../../constants/paths';
+import PATHS from '../../constants/routes/paths';
 
 const Page = () => {
     const theme = useTheme();
@@ -26,13 +26,13 @@ const Page = () => {
                         sx={{
                             display: 'flex',
                             justifyContent: 'center',
-                            mb: 6,
+                            mb: 1,
                         }}
                     >
                         <CardMedia
                             component="img"
                             alt="Not authorized"
-                            image="assets/errors/error-401.png"
+                            image="assets/errors/401.png"
                             sx={{
                                 height: 'auto',
                                 maxWidth: '100%',
@@ -54,7 +54,7 @@ const Page = () => {
                             mt: 6,
                         }}
                     >
-                        <Button component="a" href={PATHS.INDEX}>
+                        <Button component="a" href={PATHS.HOME} variant="contained">
                             Back to Home
                         </Button>
                     </Box>

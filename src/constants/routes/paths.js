@@ -37,7 +37,7 @@ const PATHS = {
         },
         FEEDBACK: function (id) {
             return `/form/${id}/feedback`;
-        }
+        },
     },
     JOB: {
         INDEX: '/job',
