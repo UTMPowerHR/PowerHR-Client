@@ -38,7 +38,7 @@ const Reset = () => {
 
     const { error, isLoading } = useVerifyTokenQuery(token);
 
-    const [resetPassword, { error: resetError, isLoading: isResetting, isSuccess }] = useResetPasswordMutation();
+    const [resetPassword, { isLoading: isResetting, isSuccess }] = useResetPasswordMutation();
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
@@ -79,13 +79,24 @@ const Reset = () => {
                 .oneOf([Yup.ref('password')], 'Passwords must match'),
         }),
         onSubmit: async (values, helpers) => {
-            try {
-                // Your reset password logic here
-                await resetPassword({ token, password: values.password, confirmPassword: values.confirmPassword });
-                helpers.resetForm();
-            } catch (err) {
-                helpers.setFieldError('submit', err.message);
-            }
+            await resetPassword({ token, password: values.password, confirmPassword: values.confirmPassword })
+                .unwrap()
+                .then(() => {
+                    helpers.setStatus({ success: true });
+                    helpers.setSubmitting(false);
+                })
+                .catch((err) => {
+                    const { data, error } = err;
+
+                    helpers.setStatus({ success: false });
+                    if (data) {
+                        helpers.setErrors({ submit: data.error });
+                    }
+                    if (error) {
+                        helpers.setErrors({ submit: 'Internal Server Error' });
+                    }
+                    helpers.setSubmitting(false);
+                });
         },
     });
 
