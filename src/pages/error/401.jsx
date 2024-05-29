@@ -10,7 +10,7 @@ const Page = () => {
     return (
         <>
             <Helmet>
-                <title>Error: Authorization Required | PowerHR</title>
+                <title>Authorization Required | PowerHR</title>
             </Helmet>
             <Box
                 component="main"
