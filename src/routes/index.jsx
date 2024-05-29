@@ -7,7 +7,7 @@ import ErrorPage from '../pages/error';
 
 const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route element={<LoadingPage />}> 
+        <Route element={<LoadingPage />}>
             {publicRoutes}
             {privateRoutes}
             <Route path="*" element={<ErrorPage />} />
