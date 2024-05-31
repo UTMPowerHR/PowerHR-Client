@@ -134,7 +134,7 @@ const Register = () => {
                 <CardContent>
                     <Show when={formik.status?.success === true}>
                         <Stack spacing={3}>
-                            <Alert severity="success">You have successfully registered!</Alert>
+                            <Alert severity="success">Check your email to verify your account</Alert>
                             <Button
                                 color="primary"
                                 fullWidth

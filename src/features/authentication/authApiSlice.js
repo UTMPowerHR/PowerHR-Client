@@ -29,8 +29,19 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        activateAccount: builder.mutation({
+            query: (token) => ({
+                url: `/authentication/activate-account?token=${token}`,
+                method: 'GET',
+            }),
+        }),
     }),
 });
 
-export const { useLoginMutation, useForgotPasswordMutation, useResetPasswordMutation, useVerifyTokenQuery } =
-    authApiSlice;
+export const {
+    useLoginMutation,
+    useForgotPasswordMutation,
+    useResetPasswordMutation,
+    useVerifyTokenQuery,
+    useActivateAccountMutation,
+} = authApiSlice;
