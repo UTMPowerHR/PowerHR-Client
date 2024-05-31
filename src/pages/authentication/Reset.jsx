@@ -16,7 +16,7 @@ import Show from '../../components/show';
 import { useState, useEffect } from 'react';
 import KeyboardCapslockRoundedIcon from '@mui/icons-material/KeyboardCapslockRounded';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useVerifyTokenQuery, useResetPasswordMutation } from '../../features/authentication/authApiSlice';
+import { useVerifyTokenQuery, useResetPasswordMutation } from '../../features/auth/authApiSlice';
 import { useSearchParams } from 'react-router-dom';
 import { LoadingComponent } from '../../components/loading';
 import PATHS from '../../constants/routes/paths';

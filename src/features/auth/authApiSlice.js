@@ -4,35 +4,42 @@ export const authApiSlice = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         login: builder.mutation({
             query: (credentials) => ({
-                url: '/authentication/login',
+                url: '/auth/login',
                 method: 'POST',
                 body: { ...credentials },
             }),
         }),
         forgotPassword: builder.mutation({
             query: (email) => ({
-                url: '/authentication/forgot-password',
+                url: '/auth/forgot-password',
                 method: 'POST',
                 body: { email },
             }),
         }),
         resetPassword: builder.mutation({
             query: ({ token, password, confirmPassword }) => ({
-                url: '/authentication/reset-password',
+                url: '/auth/reset-password',
                 method: 'POST',
                 body: { token, password, confirmPassword },
             }),
         }),
         verifyToken: builder.query({
             query: (token) => ({
-                url: `/authentication/verify-token?token=${token}`,
+                url: `/auth/verify-token?token=${token}`,
                 method: 'GET',
             }),
         }),
         activateAccount: builder.mutation({
             query: (token) => ({
-                url: `/authentication/activate-account?token=${token}`,
+                url: `/auth/activate-account?token=${token}`,
                 method: 'GET',
+            }),
+        }),
+        registerApplicant: builder.mutation({
+            query: (data) => ({
+                url: '/auth/register/applicant',
+                method: 'POST',
+                body: { ...data },
             }),
         }),
     }),
@@ -44,4 +51,5 @@ export const {
     useResetPasswordMutation,
     useVerifyTokenQuery,
     useActivateAccountMutation,
+    useRegisterApplicantMutation,
 } = authApiSlice;
