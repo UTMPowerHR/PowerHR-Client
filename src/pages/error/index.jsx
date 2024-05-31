@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 const Page401 = lazy(() => import('./401'));
+const Page404 = lazy(() => import('./404'));
 
 function ErrorPage() {
     const error = useRouteError();
@@ -23,7 +24,7 @@ function ErrorPage() {
         }
     }
 
-    return <Page401 />;
+    return <Page404 />;
 }
 
 export default ErrorPage;

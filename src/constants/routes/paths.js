@@ -5,6 +5,7 @@ const PATHS = {
         REGISTER: '/register',
         FORGOT_PASSWORD: '/forgot-password',
         RESET_PASSWORD: '/reset-password',
+        ACTIVATE: '/activate',
     },
     DASHBOARD: {
         INDEX: '/dashboard',
@@ -18,35 +19,56 @@ const PATHS = {
         EMPLOYEE: {
             INDEX: '/admin/employee',
             ADD: '/admin/employee/add',
-            EDIT: function (id) {
-                return `/admin/employee/${id}/edit`;
+            EDIT: {
+                PATH: '/admin/employee/:id/edit',
+                URL: function (id) {
+                    return `/admin/employee/${id}/edit`;
+                },
             },
         },
     },
     FORM: {
         INDEX: '/form',
-        EDIT: function (id) {
-            return `/form/${id}/edit`;
+        EDIT: {
+            PATH: '/form/:id/edit',
+            URL: function (id) {
+                return `/form/${id}/edit`;
+            },
         },
         LIST: '/form/list',
-        ANSWER: function (id) {
-            return `/form/${id}/answer`;
+        ANSWER: {
+            PATH: '/form/:id/answer',
+            URL: function (id) {
+                return `/form/${id}/answer`;
+            },
         },
-        PREVIEW: function (id) {
-            return `/form/${id}/preview`;
+        PREVIEW: {
+            PATH: '/form/:id/preview',
+            URL: function (id) {
+                return `/form/${id}/preview`;
+            },
         },
-        FEEDBACK: function (id) {
-            return `/form/${id}/feedback`;
+        FEEDBACK: {
+            PATH: '/form/:id/feedback',
+            URL: function (id) {
+                return `/form/${id}/feedback`;
+            },
         },
     },
     JOB: {
         INDEX: '/job',
         CREATE: '/job/create',
-        EDIT: function (id) {
-            return `/job/${id}/edit`;
+        EDIT: {
+            PATH: '/job/:id/edit',
+            URL: function (id) {
+                return `/job/${id}/edit`;
+            },
         },
-        POSTING: function (id) {
-            return `/job/${id}`;
+        POSTING: {
+            PATH: '/job/:id/posting',
+            URL: function (id) {
+                return `/job/${id}`;
+            },
         },
         LIST: '/job/list',
         FILTER: '/job/filter',
