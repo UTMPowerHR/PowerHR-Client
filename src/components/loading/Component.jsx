@@ -2,9 +2,9 @@ import { Backdrop, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const LoadingComponent = (props) => {
-    const { children, isloading } = props;
+    const { children, isLoading } = props;
 
-    if (isloading === true) {
+    if (isLoading === true) {
         return (
             <Backdrop open>
                 <CircularProgress color="inherit" />
@@ -16,7 +16,7 @@ const LoadingComponent = (props) => {
 
 LoadingComponent.propTypes = {
     children: PropTypes.node.isRequired,
-    isloading: PropTypes.bool.isRequired,
+    isLoading: PropTypes.bool.isRequired,
 };
 
 export default LoadingComponent;
