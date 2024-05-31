@@ -1,4 +1,4 @@
-import { useActivateAccountMutation, useVerifyTokenQuery } from '../../features/authentication/authApiSlice';
+import { useActivateAccountMutation, useVerifyTokenQuery } from '../../features/auth/authApiSlice';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Card, CardContent, CardHeader, Stack, Alert } from '@mui/material';
 import { LoadingComponent } from '../../components/loading';

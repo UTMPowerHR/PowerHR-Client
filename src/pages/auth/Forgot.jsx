@@ -1,5 +1,5 @@
 import { Button, Card, CardContent, CardHeader, TextField, Box, Stack, Alert } from '@mui/material';
-import { useForgotPasswordMutation } from '../../features/authentication/authApiSlice';
+import { useForgotPasswordMutation } from '../../features/auth/authApiSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import Show from '../../components/show';

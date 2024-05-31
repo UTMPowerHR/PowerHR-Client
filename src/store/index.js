@@ -2,7 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { apiSlice } from './api/apiSlice';
 import { persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 import storageSession from 'redux-persist/lib/storage/session';
-import authReducer from '../features/authentication/authSlice';
+import authReducer from '../features/auth/authSlice';
 
 const persistConfig = {
     key: 'root',

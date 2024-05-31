@@ -20,7 +20,7 @@ import {
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { useRegisterApplicantMutation } from '../../features/applicant/applicantApiSlice';
+import { useRegisterApplicantMutation } from '../../features/auth/authApiSlice';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import KeyboardCapslockRoundedIcon from '@mui/icons-material/KeyboardCapslockRounded';
 import PATHS from '../../constants/routes/paths';
