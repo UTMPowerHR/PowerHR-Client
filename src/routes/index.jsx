@@ -2,8 +2,8 @@ import { Route, createBrowserRouter, createRoutesFromElements } from 'react-rout
 
 import publicRoutes from './publicRoutes';
 import privateRoutes from './privateRoutes';
-import { LoadingPage } from '../components/loading';
-import ErrorPage from '../pages/error';
+import { LoadingPage } from '@components/loading';
+import ErrorPage from '@pages/error';
 
 const router = createBrowserRouter(
     createRoutesFromElements(

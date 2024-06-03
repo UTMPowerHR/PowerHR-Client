@@ -13,12 +13,12 @@ import {
 } from '@mui/material';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
-import PATHS from '../../constants/routes/paths';
-import Show from '../../components/show';
+import PATHS from '@constants/routes/paths';
+import Show from '@components/show';
 import { useState, useEffect } from 'react';
 import KeyboardCapslockRoundedIcon from '@mui/icons-material/KeyboardCapslockRounded';
-import { useLoginMutation } from '../../features/auth/authApiSlice';
-import { setCredentials } from '../../features/auth/authSlice';
+import { useLoginMutation } from '@features/auth/authApiSlice';
+import { setCredentials } from '@features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';

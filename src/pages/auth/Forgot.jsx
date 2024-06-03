@@ -1,8 +1,8 @@
 import { Button, Card, CardContent, CardHeader, TextField, Box, Stack, Alert } from '@mui/material';
-import { useForgotPasswordMutation } from '../../features/auth/authApiSlice';
+import { useForgotPasswordMutation } from '@features/auth/authApiSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import Show from '../../components/show';
+import Show from '@components/show';
 
 const ForgotPassword = () => {
     const [forgotPassword, { isLoading: forgotPasswordLoading }] = useForgotPasswordMutation();
