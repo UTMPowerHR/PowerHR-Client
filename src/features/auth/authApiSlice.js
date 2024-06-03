@@ -30,9 +30,10 @@ export const authApiSlice = apiSlice.injectEndpoints({
             }),
         }),
         activateAccount: builder.mutation({
-            query: (token) => ({
+            query: ({ token, password, confirmPassword }) => ({
                 url: `/auth/activate-account?token=${token}`,
-                method: 'GET',
+                method: 'POST',
+                body: { password, confirmPassword },
             }),
         }),
         registerApplicant: builder.mutation({

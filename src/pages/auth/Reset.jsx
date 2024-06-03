@@ -12,14 +12,14 @@ import {
 } from '@mui/material';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
-import Show from '../../components/show';
+import Show from '@components/show';
 import { useState, useEffect } from 'react';
 import KeyboardCapslockRoundedIcon from '@mui/icons-material/KeyboardCapslockRounded';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useVerifyTokenQuery, useResetPasswordMutation } from '../../features/auth/authApiSlice';
+import { useVerifyTokenQuery, useResetPasswordMutation } from '@features/auth/authApiSlice';
 import { useSearchParams } from 'react-router-dom';
-import { LoadingComponent } from '../../components/loading';
-import PATHS from '../../constants/routes/paths';
+import { LoadingComponent } from '@components/loading';
+import PATHS from '@constants/routes/paths';
 import { useNavigate } from 'react-router-dom';
 
 const getCharacterValidationError = (str) => {

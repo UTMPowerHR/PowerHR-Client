@@ -7,6 +7,9 @@ const PATHS = {
         RESET_PASSWORD: '/reset-password',
         ACTIVATE: '/activate',
     },
+    COMPANY: {
+        REGISTER: '/company/registration',
+    },
     DASHBOARD: {
         INDEX: '/dashboard',
     },
