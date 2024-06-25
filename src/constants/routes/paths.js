@@ -9,6 +9,12 @@ const PATHS = {
     },
     COMPANY: {
         REGISTER: '/company/registration',
+        PROFILE: '/company/profile',
+        MANAGE: {
+            INDEX: '/company/manage',
+            EMPLOYEES: '/company/manage/employees',
+            DEPARTMENTS: '/company/manage/departments',
+        },
     },
     DASHBOARD: {
         INDEX: '/dashboard',
@@ -18,24 +24,22 @@ const PATHS = {
         PROFILE: '/user/profile',
         SETTING: '/user/setting',
     },
-    ADMIN: {
-        EMPLOYEE: {
-            INDEX: '/admin/employee',
-            ADD: '/admin/employee/add',
-            EDIT: {
-                PATH: '/admin/employee/:id/edit',
-                URL: function (id) {
-                    return `/admin/employee/${id}/edit`;
-                },
+    EMPLOYEE: {
+        INDEX: '/employee',
+        ADD: '/employee/add',
+        EDIT: {
+            PATH: '/employee/:id/edit',
+            URL: function (id) {
+                return `/employee/${id}/edit`;
             },
         },
     },
     FORM: {
         INDEX: '/form',
         EDIT: {
-            PATH: '/form/:id/edit',
+            PATH: '/form/:id',
             URL: function (id) {
-                return `/form/${id}/edit`;
+                return `/form/${id}`;
             },
         },
         LIST: '/form/list',
@@ -57,6 +61,7 @@ const PATHS = {
                 return `/form/${id}/feedback`;
             },
         },
+        PUBLISH: '/form/publish',
     },
     JOB: {
         INDEX: '/job',
@@ -70,11 +75,19 @@ const PATHS = {
         POSTING: {
             PATH: '/job/:id/posting',
             URL: function (id) {
-                return `/job/${id}`;
+                return `/job/${id}/posting`;
             },
         },
         LIST: '/job/list',
         FILTER: '/job/filter',
+    },
+    APPLICATION: {
+        MANAGE: {
+            PATH: '/application/:id',
+            URL: function (id) {
+                return `/application/${id}`;
+            },
+        },
     },
 };
 

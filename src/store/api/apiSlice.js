@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 // import { logout, setCredentials } from '../../features/authentication/authSlice';
-import { API } from '../../constants/env';
+import { API } from '@constants/env';
 
 const baseQuery = fetchBaseQuery({
     baseUrl: API,
@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
 export const apiSlice = createApi({
     baseQuery: baseQueryWithReauth,
-    tagTypes: [],
+    tagTypes: ['Form', 'Application'],
     // eslint-disable-next-line
     endpoints: (_builder) => ({}),
 });

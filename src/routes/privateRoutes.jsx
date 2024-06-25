@@ -2,11 +2,48 @@ import { Route } from 'react-router-dom';
 import ProtectedRoute from '@utils/protectedRoute';
 import { PrivateLayout } from '@layouts/private';
 import PATHS from '@constants/routes/paths';
+import * as Form from '@pages/forms';
+import FormTab from '@pages/forms/form/components/tab';
+import * as Company from '@pages/company';
+import * as User from '@pages/user';
+import * as Job from '@pages/job';
 
 const privateRoutes = (
     <Route element={<ProtectedRoute />}>
         <Route element={<PrivateLayout />}>
             <Route path={PATHS.DASHBOARD.INDEX} element={<div>Dashboard</div>} />
+
+            <Route>
+                <Route path={PATHS.FORM.INDEX} element={<Form.ManageForm />} />
+                <Route element={<FormTab />}>
+                    <Route path={PATHS.FORM.EDIT.PATH} element={<Form.EditForm />} />
+                    <Route path={PATHS.FORM.PREVIEW.PATH} element={<Form.AnswerForm disabled={true} />} />
+                    <Route path={PATHS.FORM.FEEDBACK.PATH} element={<Form.Feedback />} />
+                </Route>
+                <Route path={'/form/publish'} element={<Form.PublishForm />} />
+                <Route path={PATHS.FORM.ANSWER.PATH} element={<Form.AnswerForm />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.COMPANY.MANAGE.EMPLOYEES} element={<Company.Employees />} />
+                <Route path={PATHS.COMPANY.MANAGE.DEPARTMENTS} element={<Company.Departments />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.USER.PROFILE} element={<User.Account tabValue="profile" />} />
+                <Route path={PATHS.USER.SETTING} element={<User.Account tabValue="setting" />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.JOB.CREATE} element={<Job.CreateJob />} />
+                <Route path={PATHS.JOB.LIST} element={<Job.ListJob />} />
+                <Route path={PATHS.JOB.INDEX} element={<Job.Browse />} />
+                <Route path={PATHS.JOB.EDIT.PATH} element={<Job.CreateJob />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.APPLICATION.MANAGE.PATH} element={<Job.Application />} />
+            </Route>
         </Route>
     </Route>
 );
