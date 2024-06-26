@@ -27,6 +27,8 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.COMPANY.MANAGE.EMPLOYEES} element={<Company.Employees />} />
                 <Route path={PATHS.COMPANY.MANAGE.DEPARTMENTS} element={<Company.Departments />} />
+                <Route path={PATHS.COMPANY.MANAGE.INDEX} element={<Company.ManageCompany />} />
+                <Route path={PATHS.COMPANY.PROFILE} element={<Company.ProfileCompany />} />
             </Route>
 
             <Route>
@@ -43,6 +45,7 @@ const privateRoutes = (
 
             <Route>
                 <Route path={PATHS.APPLICATION.MANAGE.PATH} element={<Job.Application />} />
+                <Route path={PATHS.APPLICATION.HISTORY} element={<Job.History />} />
             </Route>
         </Route>
     </Route>

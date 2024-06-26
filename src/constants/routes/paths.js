@@ -33,6 +33,7 @@ const PATHS = {
                 return `/employee/${id}/edit`;
             },
         },
+        PROFILE: '/employee/profile',
     },
     FORM: {
         INDEX: '/form',
@@ -88,6 +89,7 @@ const PATHS = {
                 return `/application/${id}`;
             },
         },
+        HISTORY: '/application/history',
     },
 };
 

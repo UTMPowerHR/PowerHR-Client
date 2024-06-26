@@ -33,11 +33,16 @@ export const jobApiSlice = apiSlice.injectEndpoints({
                 url: '/jobs/postings',
             }),
         }),
-        getIdPostingByApplicant: builder.query({
+        getListIdApplications: builder.query({
+            query: (applicantId) => ({
+                url: '/jobs/applications/applicant/' + applicantId + '/list',
+            }),
+            providesTags: ['Application'],
+        }),
+        getApplicationByApplicant: builder.query({
             query: (applicantId) => ({
                 url: '/jobs/applications/applicant/' + applicantId,
             }),
-            providesTags: ['Application'],
         }),
         createApplication: builder.mutation({
             query: (data) => ({
@@ -69,8 +74,9 @@ export const {
     useUpdatePostingMutation,
     useGetPostingsByCompanyQuery,
     useGetAllPostingsQuery,
-    useGetIdPostingByApplicantQuery,
+    useGetListIdApplicationsQuery,
     useCreateApplicationMutation,
     useGetApplicationsByPostingQuery,
     useUpdateApplicationMutation,
+    useGetApplicationByApplicantQuery,
 } = jobApiSlice;

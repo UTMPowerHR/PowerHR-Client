@@ -1,6 +1,6 @@
 import { Grid, Stack } from '@mui/material';
 import JobListSearch from './components/job-list-search';
-import { useGetAllPostingsQuery, useGetIdPostingByApplicantQuery } from '@features/job/jobApiSlice';
+import { useGetAllPostingsQuery, useGetListIdApplicationsQuery } from '@features/job/jobApiSlice';
 import { setCompanies, setPostings } from '@features/job/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
@@ -12,7 +12,7 @@ export default function Browse() {
 
     const userId = useSelector((state) => state.auth.user._id);
 
-    const { data: listIdPosting, isLoading: postingLoading } = useGetIdPostingByApplicantQuery(userId);
+    const { data: listIdPosting, isLoading: postingLoading } = useGetListIdApplicationsQuery(userId);
 
     useEffect(() => {
         if (data) {

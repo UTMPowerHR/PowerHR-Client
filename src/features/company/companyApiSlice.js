@@ -15,6 +15,19 @@ export const companyApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        getCompanyProfile: builder.query({
+            query: (id) => ({
+                url: '/company/' + id + '/profile',
+                method: 'GET',
+            }),
+        }),
+        updateCompany: builder.mutation({
+            query: (data) => ({
+                url: '/company/' + data._id,
+                method: 'PUT',
+                body: { ...data },
+            }),
+        }),
         checkCompany: builder.mutation({
             query: (data) => ({
                 url: '/company/check',
@@ -69,6 +82,8 @@ export const {
     useRegisterCompanyMutation,
     useCheckCompanyMutation,
     useGetCompanyQuery,
+    useGetCompanyProfileQuery,
+    useUpdateCompanyMutation,
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
     useRegisterEmployeeMutation,

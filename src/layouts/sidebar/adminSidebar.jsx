@@ -15,8 +15,16 @@ const adminSection = [
                 ),
             },
             {
+                title: 'Profile',
+                path: PATHS.EMPLOYEE.PROFILE,
+            },
+            {
                 title: 'Company',
                 items: [
+                    {
+                        title: 'Manage Company',
+                        path: PATHS.COMPANY.MANAGE.INDEX,
+                    },
                     {
                         title: 'Profile',
                         path: PATHS.COMPANY.PROFILE,

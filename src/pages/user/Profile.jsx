@@ -32,6 +32,7 @@ export default function Profile() {
     const dispatch = useDispatch();
 
     const [isEditing, setIsEditing] = useState(false);
+    const [isEditingEmployee, setIsEditingEmployee] = useState(false);
 
     const formik = useFormik({
         initialValues: {
@@ -50,6 +51,48 @@ export default function Profile() {
                 dispatch(setCredentials({ user: data, token: token }));
                 helpers.setStatus({ success: true });
                 setIsEditing(false);
+            } catch (err) {
+                const { data, error } = err;
+
+                helpers.setStatus({ success: false });
+                if (data) {
+                    helpers.setErrors({ submit: data.error });
+                }
+                if (error) {
+                    helpers.setErrors({ submit: 'Internal Server Error' });
+                }
+                helpers.setSubmitting(false);
+            }
+        },
+    });
+
+    const formikEmployee = useFormik({
+        initialValues: {
+            phone: user.phone,
+            address: {
+                street: user.address?.street,
+                city: user.address?.city,
+                state: user.address?.state,
+                zip: user.address?.zip,
+                country: user.address?.country,
+            },
+        },
+        validationSchema: Yup.object().shape({
+            phone: Yup.string().required('Phone is required'),
+            address: Yup.object().shape({
+                street: Yup.string().required('Street is required'),
+                city: Yup.string().required('City is required'),
+                state: Yup.string().required('State is required'),
+                zip: Yup.string().required('Zip is required'),
+                country: Yup.string().required('Country is required'),
+            }),
+        }),
+        onSubmit: async (values, helpers) => {
+            try {
+                const data = await updateUserMutation({ user: values, role: 'employee', id: user._id }).unwrap();
+                dispatch(setCredentials({ user: data, token: token }));
+                helpers.setStatus({ success: true });
+                setIsEditingEmployee(false);
             } catch (err) {
                 const { data, error } = err;
 
@@ -207,7 +250,15 @@ export default function Profile() {
                                         </FormControl>
 
                                         <Stack direction="row" spacing={2} justifyContent="flex-end">
-                                            <Button color="inherit" size="small" onClick={formik.handleReset}>
+                                            <Button
+                                                color="inherit"
+                                                size="small"
+                                                onClick={() => {
+                                                    formikEmployee.handleReset();
+                                                    setIsEditing(false);
+                                                }}
+                                                disabled={!isEditing}
+                                            >
                                                 Cancel
                                             </Button>
                                             <Button
@@ -226,6 +277,180 @@ export default function Profile() {
                     </Grid>
                 </CardContent>
             </Card>
+            {user.role !== 'Applicant' && (
+                <Card>
+                    <CardContent>
+                        <Grid container spacing={3}>
+                            <Grid xs={12} md={4}>
+                                <Typography variant="h6">Employee details</Typography>
+                            </Grid>
+
+                            <Grid xs={12} md={8}>
+                                <Stack spacing={3}>
+                                    <Box
+                                        component="form"
+                                        noValidate
+                                        autoComplete="off"
+                                        onSubmit={formikEmployee.handleSubmit}
+                                    >
+                                        <Stack spacing={2}>
+                                            <TextField
+                                                error={!!(formikEmployee.touched.phone && formikEmployee.errors.phone)}
+                                                fullWidth
+                                                helperText={formikEmployee.touched.phone && formikEmployee.errors.phone}
+                                                label="Phone"
+                                                name="phone"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.phone}
+                                            />
+                                            <TextField
+                                                error={
+                                                    !!(
+                                                        formikEmployee.touched.address?.street &&
+                                                        formikEmployee.errors.address?.street
+                                                    )
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikEmployee.touched.address?.street &&
+                                                    formikEmployee.errors.address?.street
+                                                }
+                                                label="Street"
+                                                name="address.street"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.address.street}
+                                            />
+                                            <TextField
+                                                error={
+                                                    !!(
+                                                        formikEmployee.touched.address?.city &&
+                                                        formikEmployee.errors.address?.city
+                                                    )
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikEmployee.touched.address?.city &&
+                                                    formikEmployee.errors.address?.city
+                                                }
+                                                label="City"
+                                                name="address.city"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.address.city}
+                                            />
+                                            <TextField
+                                                error={
+                                                    !!(
+                                                        formikEmployee.touched.address?.state &&
+                                                        formikEmployee.errors.address?.state
+                                                    )
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikEmployee.touched.address?.state &&
+                                                    formikEmployee.errors.address?.state
+                                                }
+                                                label="State"
+                                                name="address.state"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.address.state}
+                                            />
+                                            <TextField
+                                                error={
+                                                    !!(
+                                                        formikEmployee.touched.address?.zip &&
+                                                        formikEmployee.errors.address?.zip
+                                                    )
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikEmployee.touched.address?.zip &&
+                                                    formikEmployee.errors.address?.zip
+                                                }
+                                                label="Zip"
+                                                name="address.zip"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.address.zip}
+                                            />
+                                            <TextField
+                                                error={
+                                                    !!(
+                                                        formikEmployee.touched.address?.country &&
+                                                        formikEmployee.errors.address?.country
+                                                    )
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikEmployee.touched.address?.country &&
+                                                    formikEmployee.errors.address?.country
+                                                }
+                                                label="Country"
+                                                name="address.country"
+                                                onBlur={formikEmployee.handleBlur}
+                                                onChange={(e) => {
+                                                    formikEmployee.handleChange(e);
+                                                    setIsEditingEmployee(true);
+                                                }}
+                                                type="text"
+                                                value={formikEmployee.values.address.country}
+                                            />
+                                            <Stack direction="row" spacing={2} justifyContent="flex-end">
+                                                <Button
+                                                    color="inherit"
+                                                    size="small"
+                                                    onClick={() => {
+                                                        formikEmployee.handleReset();
+                                                        setIsEditingEmployee(false);
+                                                    }}
+                                                    disabled={!isEditingEmployee}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    disabled={
+                                                        formikEmployee.isSubmitting ||
+                                                        !formikEmployee.isValid ||
+                                                        !isEditingEmployee
+                                                    }
+                                                    type="submit"
+                                                >
+                                                    {formikEmployee.isSubmitting ? 'Saving...' : 'Save'}
+                                                </Button>
+                                            </Stack>
+                                        </Stack>
+                                    </Box>
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            )}
         </Stack>
     );
 }

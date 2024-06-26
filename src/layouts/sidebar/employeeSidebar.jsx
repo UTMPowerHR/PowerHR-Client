@@ -15,11 +15,15 @@ const employeeSection = [
                 ),
             },
             {
+                title: 'Profile',
+                path: PATHS.EMPLOYEE.PROFILE,
+            },
+            {
                 subheader: 'Forms',
                 title: 'Forms',
                 items: [
                     {
-                        title: 'Survey',
+                        title: 'Fill Form',
                         path: PATHS.FORM.PUBLISH,
                     },
                 ],

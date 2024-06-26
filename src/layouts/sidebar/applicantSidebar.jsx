@@ -22,11 +22,11 @@ const applicantSection = [
                         title: 'Browse',
                         path: PATHS.JOB.INDEX,
                     },
+                    {
+                        title: 'History',
+                        path: PATHS.APPLICATION.HISTORY,
+                    },
                 ],
-            },
-            {
-                title: 'Resume Builder',
-                path: '/resume/builder',
             },
         ],
     },
