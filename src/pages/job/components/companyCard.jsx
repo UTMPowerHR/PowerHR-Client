@@ -2,6 +2,7 @@ import { Avatar, Card, CardContent, Link, Stack, Typography, Box } from '@mui/ma
 import PropTypes from 'prop-types';
 import { useSelector } from 'react-redux';
 import CompanyPosting from './companyPosting';
+import PATHS from '@constants/routes/paths';
 
 export default function CompanyCard(props) {
     const { index } = props;
@@ -19,9 +20,20 @@ export default function CompanyCard(props) {
                         sm: 'row',
                     }}
                 >
-                    <Avatar component={'a'} href="#" src={company?.logo} variant="rounded" />
+                    <Avatar
+                        component={'a'}
+                        href={PATHS.COMPANY.PROFILE + '?id=' + company?._id}
+                        alt="Company logo"
+                        src={company?.logo}
+                        variant="rounded"
+                    />
                     <Stack>
-                        <Link color="text.primary" component={'a'} href="#" variant="h6">
+                        <Link
+                            color="text.primary"
+                            component={'a'}
+                            href={PATHS.COMPANY.PROFILE + '?id=' + company?._id}
+                            variant="h6"
+                        >
                             {company?.name}
                         </Link>
                         <Typography variant="body2">This is description</Typography>

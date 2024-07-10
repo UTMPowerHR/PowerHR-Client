@@ -43,6 +43,8 @@ function TableForm() {
     const [open, setOpen] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
 
+    console.log('forms', forms);
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
 

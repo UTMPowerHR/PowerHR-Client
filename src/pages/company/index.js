@@ -5,5 +5,6 @@ const Employees = lazy(() => import('./Employees'));
 const Departments = lazy(() => import('./Departments'));
 const ManageCompany = lazy(() => import('./ManageCompany'));
 const ProfileCompany = lazy(() => import('./ProfileCompany'));
+const TurnOver = lazy(() => import('./TurnOver'));
 
-export { Registration, Employees, Departments, ManageCompany, ProfileCompany };
+export { Registration, Employees, Departments, ManageCompany, ProfileCompany, TurnOver };

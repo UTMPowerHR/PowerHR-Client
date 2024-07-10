@@ -11,12 +11,8 @@ import PATHS from '../../../constants/routes/paths';
 
 const items = [
     {
-        title: 'Find Jobs',
-        path: '/jobs',
-    },
-    {
-        title: 'About Us',
-        path: '/about-us',
+        title: 'Company Registration',
+        path: PATHS.COMPANY.REGISTER,
     },
 ];
 

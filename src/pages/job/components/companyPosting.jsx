@@ -44,6 +44,7 @@ export default function CompanyPosting(props) {
     const [createApplicationMutation] = useCreateApplicationMutation();
 
     const [open, setOpen] = useState('');
+    const [openApply, setOpenApply] = useState('');
 
     async function handleApply(id) {
         const data = {
@@ -52,6 +53,14 @@ export default function CompanyPosting(props) {
         };
 
         await createApplicationMutation(data);
+    }
+
+    async function openJobDescription(id) {
+        setOpen(id);
+    }
+
+    function openPopUpApply(id) {
+        setOpenApply(id);
     }
 
     return (
@@ -73,7 +82,7 @@ export default function CompanyPosting(props) {
                             >
                                 <Stack>
                                     <Typography
-                                        onClick={() => setOpen(posting._id)}
+                                        onClick={() => openJobDescription(posting._id)}
                                         variant="subtitle1"
                                         style={{ cursor: 'pointer' }}
                                     >
@@ -98,7 +107,10 @@ export default function CompanyPosting(props) {
                                     <Button
                                         size="small"
                                         disabled={listIdPosting?.includes(posting._id)}
-                                        onClick={() => handleApply(posting._id)}
+                                        onClick={() => {
+                                            setOpen(posting._id);
+                                            openPopUpApply(posting._id);
+                                        }}
                                     >
                                         Apply
                                     </Button>
@@ -108,7 +120,15 @@ export default function CompanyPosting(props) {
                     })}
                 </Stack>
             </Card>
-            <Dialog onClose={() => setOpen('')} open={open !== ''} fullWidth>
+
+            <Dialog
+                onClose={() => {
+                    setOpenApply('');
+                    setOpen('');
+                }}
+                open={open}
+                fullWidth
+            >
                 <DialogContent>
                     <Stack spacing={1}>
                         <Typography variant="h4">
@@ -199,6 +219,21 @@ export default function CompanyPosting(props) {
                                     ?.find((posting) => posting._id === open)
                                     ?.softSkills.map((skill) => <Typography key={skill}>{skill.name}</Typography>)}
                         </Stack>
+                    )}
+
+                    {openApply !== '' && (
+                        <Button
+                            sx={{ mt: 2 }}
+                            onClick={() => {
+                                handleApply(openApply);
+                                setOpen('');
+                                setOpenApply('');
+                            }}
+                            variant="contained"
+                            fullWidth
+                        >
+                            Apply
+                        </Button>
                     )}
                 </DialogContent>
                 <DialogActions>

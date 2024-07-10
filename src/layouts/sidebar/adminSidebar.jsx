@@ -1,6 +1,7 @@
 import PATHS from '@constants/routes/paths';
 import { SvgIcon } from '@mui/material';
 import HomeSmileIcon from '../../icons/untitled-ui/duocolor/home-smile';
+import ActivityIcon from '../../icons/untitled-ui/duocolor/activity';
 
 const adminSection = [
     {
@@ -13,10 +14,6 @@ const adminSection = [
                         <HomeSmileIcon />
                     </SvgIcon>
                 ),
-            },
-            {
-                title: 'Profile',
-                path: PATHS.EMPLOYEE.PROFILE,
             },
             {
                 title: 'Company',
@@ -43,6 +40,15 @@ const adminSection = [
                         path: PATHS.COMPANY.MANAGE.EMPLOYEES,
                     },
                 ],
+            },
+            {
+                title: 'Monitor',
+                path: PATHS.MONITOR.INDEX,
+                icon: (
+                    <SvgIcon fontSize="small">
+                        <ActivityIcon />
+                    </SvgIcon>
+                ),
             },
         ],
     },

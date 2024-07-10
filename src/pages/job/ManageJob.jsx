@@ -302,9 +302,21 @@ function TablePostings() {
 }
 
 function ListJob() {
+    const navigate = useNavigate();
+
     return (
         <div>
-            <h1>List Job</h1>
+            <Stack spacing={2} sx={{ mb: 3 }} direction="row" justifyContent="space-between" alignItems="center">
+                <Stack>
+                    <Typography variant="h4">Manage Job</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Manage your job postings here
+                    </Typography>
+                </Stack>
+                <Button variant="contained" onClick={() => navigate(PATHS.JOB.CREATE)}>
+                    Create Job
+                </Button>
+            </Stack>
             <TablePostings />
         </div>
     );

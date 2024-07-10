@@ -7,11 +7,12 @@ import FormTab from '@pages/forms/form/components/tab';
 import * as Company from '@pages/company';
 import * as User from '@pages/user';
 import * as Job from '@pages/job';
+import * as Admin from '@pages/admin';
 
 const privateRoutes = (
     <Route element={<ProtectedRoute />}>
         <Route element={<PrivateLayout />}>
-            <Route path={PATHS.DASHBOARD.INDEX} element={<div>Dashboard</div>} />
+            <Route path={PATHS.DASHBOARD.INDEX} element={<User.Dashboard />} />
 
             <Route>
                 <Route path={PATHS.FORM.INDEX} element={<Form.ManageForm />} />
@@ -20,7 +21,7 @@ const privateRoutes = (
                     <Route path={PATHS.FORM.PREVIEW.PATH} element={<Form.AnswerForm disabled={true} />} />
                     <Route path={PATHS.FORM.FEEDBACK.PATH} element={<Form.Feedback />} />
                 </Route>
-                <Route path={'/form/publish'} element={<Form.PublishForm />} />
+                <Route path={PATHS.FORM.PUBLISH} element={<Form.PublishForm />} />
                 <Route path={PATHS.FORM.ANSWER.PATH} element={<Form.AnswerForm />} />
             </Route>
 
@@ -46,6 +47,14 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.APPLICATION.MANAGE.PATH} element={<Job.Application />} />
                 <Route path={PATHS.APPLICATION.HISTORY} element={<Job.History />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.MONITOR.INDEX} element={<Admin.Monitor />} />
+            </Route>
+
+            <Route>
+                <Route path={PATHS.ANALYTIC.TURNOVER} element={<Company.TurnOver />} />
             </Route>
         </Route>
     </Route>

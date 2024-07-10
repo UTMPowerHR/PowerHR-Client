@@ -91,6 +91,12 @@ const PATHS = {
         },
         HISTORY: '/application/history',
     },
+    MONITOR: {
+        INDEX: '/monitor',
+    },
+    ANALYTIC: {
+        TURNOVER: '/analytic/turnover',
+    },
 };
 
 export default PATHS;

@@ -129,7 +129,7 @@ export default function Application() {
                                             <TableCell>
                                                 <Button
                                                     variant="outlined"
-                                                    onClick={() => window.open(application.resume, '_blank')}
+                                                    onClick={() => window.open(application.applicant.resume, '_blank')}
                                                 >
                                                     View
                                                 </Button>

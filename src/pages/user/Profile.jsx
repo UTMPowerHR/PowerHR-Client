@@ -33,6 +33,7 @@ export default function Profile() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [isEditingEmployee, setIsEditingEmployee] = useState(false);
+    const [isEditingApplicant, setIsEditingApplicant] = useState(false);
 
     const formik = useFormik({
         initialValues: {
@@ -51,6 +52,35 @@ export default function Profile() {
                 dispatch(setCredentials({ user: data, token: token }));
                 helpers.setStatus({ success: true });
                 setIsEditing(false);
+            } catch (err) {
+                const { data, error } = err;
+
+                helpers.setStatus({ success: false });
+                if (data) {
+                    helpers.setErrors({ submit: data.error });
+                }
+                if (error) {
+                    helpers.setErrors({ submit: 'Internal Server Error' });
+                }
+                helpers.setSubmitting(false);
+            }
+        },
+    });
+
+    const formikApplicant = useFormik({
+        initialValues: {
+            resume: user.resume,
+        },
+        validationSchema: Yup.object().shape({
+            resume: Yup.string().required('Resume is required'),
+        }),
+        onSubmit: async (values, helpers) => {
+            try {
+                const data = await updateUserMutation({ user: values, role: 'applicant', id: user._id }).unwrap();
+
+                dispatch(setCredentials({ user: data, token: token }));
+                helpers.setStatus({ success: true });
+                setIsEditingApplicant(false);
             } catch (err) {
                 const { data, error } = err;
 
@@ -277,6 +307,76 @@ export default function Profile() {
                     </Grid>
                 </CardContent>
             </Card>
+
+            {user.role === 'Applicant' && (
+                <Card>
+                    <CardContent>
+                        <Grid container spacing={3}>
+                            <Grid xs={12} md={4}>
+                                <Typography variant="h6">Applicant details</Typography>
+                            </Grid>
+
+                            <Grid xs={12} md={8}>
+                                <Stack spacing={3}>
+                                    <Box
+                                        component="form"
+                                        noValidate
+                                        autoComplete="off"
+                                        onSubmit={formikApplicant.handleSubmit}
+                                    >
+                                        <Stack spacing={2}>
+                                            <TextField
+                                                error={
+                                                    !!(formikApplicant.touched.resume && formikApplicant.errors.resume)
+                                                }
+                                                fullWidth
+                                                helperText={
+                                                    formikApplicant.touched.resume && formikApplicant.errors.resume
+                                                }
+                                                label="Resume Link"
+                                                name="resume"
+                                                onBlur={formikApplicant.handleBlur}
+                                                onChange={(e) => {
+                                                    formikApplicant.handleChange(e);
+                                                    setIsEditingApplicant(true);
+                                                }}
+                                                type="text"
+                                                value={formikApplicant.values.resume}
+                                            />
+                                            <Stack direction="row" spacing={2} justifyContent="flex-end">
+                                                <Button
+                                                    color="inherit"
+                                                    size="small"
+                                                    onClick={() => {
+                                                        formikApplicant.handleReset();
+                                                        setIsEditingApplicant(false);
+                                                    }}
+                                                    disabled={!isEditingApplicant}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    disabled={
+                                                        formikApplicant.isSubmitting ||
+                                                        !formikApplicant.isValid ||
+                                                        !isEditingApplicant
+                                                    }
+                                                    type="submit"
+                                                >
+                                                    {formikApplicant.isSubmitting ? 'Saving...' : 'Save'}
+                                                </Button>
+                                            </Stack>
+                                        </Stack>
+                                    </Box>
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+            )}
+
             {user.role !== 'Applicant' && (
                 <Card>
                     <CardContent>

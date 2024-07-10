@@ -11,39 +11,38 @@ import DeleteDialog from './components/delete-dialog';
 import QuestionCard from './components/questionCard';
 import SettingDialog from './components/setting-dialog';
 
-const reorder = async (list, startIndex, endIndex) => {
-    const result = Array.from(list);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-
-    return result;
-};
-
 function EditForm() {
+    // Get the form id from the URL
     const { id } = useParams();
-    const { data, isSuccess, isLoading } = useGetFormByIdWithSnapshotQuery(id, { refetchOnMountOrArgChange: true });
 
+    // Fetch the form data from the API
+    const { data, isSuccess, isLoading } = useGetFormByIdWithSnapshotQuery(id, { refetchOnMountOrArgChange: true });
+    const [updateFormMutation] = useUpdateFormMutation();
+
+    // Dispatch actions to update the Redux store
     const dispatch = useDispatch();
+
+    // Get the form data from the Redux store
     const form = useSelector((state) => state.form.form);
     const deleteQuestions = useSelector((state) => state.form.deleteQuestions);
     const questions = useSelector((state) => state.form.form.questions);
     const currentQuestion = useSelector((state) => state.form.currentQuestion);
     const saved = useSelector((state) => state.form.saved);
+
+    // Local state for the dialog
     const [open, setOpen] = useState(false);
     const [openSetting, setOpenSetting] = useState(false);
 
+    // Update the form data in the Redux store when the API call is successful
     useEffect(() => {
         if (isSuccess) {
             dispatch(setForm(data.form));
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, isSuccess]);
+    }, [data, dispatch, isSuccess]);
 
-    const [updateFormMutation] = useUpdateFormMutation();
-
+    //Functions
     const handleSave = async () => {
         try {
-            // Await the result of the updateFormMutation
             const unSaveForm = { ...form };
             unSaveForm.questions = [...questions, ...deleteQuestions];
             await updateFormMutation({ form: unSaveForm });
@@ -62,6 +61,14 @@ function EditForm() {
 
     const handleConfirmDelete = () => {
         setOpen(true);
+    };
+
+    const reorder = async (list, startIndex, endIndex) => {
+        const result = Array.from(list);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+
+        return result;
     };
 
     const handleOnDragEnd = async ({ source, destination }) => {

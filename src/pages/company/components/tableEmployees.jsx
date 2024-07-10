@@ -33,6 +33,7 @@ import {
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
     useRegisterEmployeeMutation,
+    useGetDepartmentsQuery,
 } from '@features/company/companyApiSlice';
 import { setEmployees } from '@features/company/companySlice';
 import dayjs from 'dayjs';
@@ -55,6 +56,7 @@ function TableEmployees() {
 
     const [updateEmployee] = useUpdateEmployeeMutation();
     const [registerEmployee] = useRegisterEmployeeMutation();
+    const { data: departmentsData } = useGetDepartmentsQuery(user.company);
 
     const formik = useFormik({
         initialValues: {
@@ -64,6 +66,7 @@ function TableEmployees() {
             email: '',
             jobTitle: '',
             hireDate: dayjs().utc().format(),
+            terminationDate: null,
             gender: '',
             department: '',
             salary: 0,
@@ -147,6 +150,7 @@ function TableEmployees() {
             hireDate: employee.hireDate,
             salary: employee.salary,
             gender: employee.gender,
+            terminationDate: employee.terminationDate,
         });
 
         setOpen(true);
@@ -214,8 +218,8 @@ function TableEmployees() {
                                         {employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}
                                     </TableCell>
                                     <TableCell>
-                                        {employee.terminatedAt
-                                            ? dayjs(employee.terminatedAt).format('DD MMM YYYY')
+                                        {employee.terminationDate
+                                            ? dayjs(employee.terminationDate).format('DD MMM YYYY')
                                             : 'N/A'}
                                     </TableCell>
                                     <TableCell align="right">
@@ -256,6 +260,7 @@ function TableEmployees() {
                             value={formik.values.firstName}
                             error={formik.touched.firstName && Boolean(formik.errors.firstName)}
                             helperText={formik.touched.firstName && formik.errors.firstName}
+                            required
                         />
                         <TextField
                             fullWidth
@@ -266,12 +271,14 @@ function TableEmployees() {
                             value={formik.values.lastName}
                             error={formik.touched.lastName && Boolean(formik.errors.lastName)}
                             helperText={formik.touched.lastName && formik.errors.lastName}
+                            required
                         />
                         <FormControl
                             variant="filled"
                             fullWidth
                             error={!!(formik.touched.gender && formik.errors.gender)}
                             helperText={formik.touched.gender && formik.errors.gender}
+                            required
                         >
                             <InputLabel>Gender</InputLabel>
                             <Select
@@ -294,6 +301,7 @@ function TableEmployees() {
                             value={formik.values.email}
                             error={formik.touched.email && Boolean(formik.errors.email)}
                             helperText={formik.touched.email && formik.errors.email}
+                            required
                         />
                         <TextField
                             fullWidth
@@ -304,6 +312,7 @@ function TableEmployees() {
                             value={formik.values.personalEmail}
                             error={formik.touched.personalEmail && Boolean(formik.errors.personalEmail)}
                             helperText={formik.touched.personalEmail && formik.errors.personalEmail}
+                            required
                         />
                         <TextField
                             fullWidth
@@ -314,6 +323,7 @@ function TableEmployees() {
                             value={formik.values.jobTitle}
                             error={formik.touched.jobTitle && Boolean(formik.errors.jobTitle)}
                             helperText={formik.touched.jobTitle && formik.errors.jobTitle}
+                            required
                         />
                         <TextField
                             fullWidth
@@ -324,33 +334,60 @@ function TableEmployees() {
                             value={formik.values.salary}
                             error={formik.touched.salary && Boolean(formik.errors.salary)}
                             helperText={formik.touched.salary && formik.errors.salary}
+                            required
                         />
-                        <TextField
-                            fullWidth
-                            label="Department"
-                            name="department"
-                            onBlur={formik.handleBlur}
-                            onChange={formik.handleChange}
-                            value={formik.values.department}
-                            error={formik.touched.department && Boolean(formik.errors.department)}
-                            helperText={formik.touched.department && formik.errors.department}
-                        />
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DemoContainer components={['DatePicker']}>
-                                <DatePicker
-                                    fullWidth
-                                    label="Hire Date"
-                                    name="hireDate"
-                                    value={dayjs(formik.values.hireDate)}
-                                    onChange={(newValue) => {
-                                        formik.setFieldValue('hireDate', newValue);
-                                    }}
-                                    error={formik.touched.hireDate && Boolean(formik.errors.hireDate)}
-                                    helperText={formik.touched.hireDate && formik.errors.hireDate}
-                                    onBlur={formik.handleBlur}
-                                />
-                            </DemoContainer>
-                        </LocalizationProvider>
+                        <FormControl fullWidth required>
+                            <InputLabel>Department</InputLabel>
+                            <Select
+                                value={formik.values.department}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                name="department"
+                            >
+                                {departmentsData &&
+                                    departmentsData.departments.map((department) => (
+                                        <MenuItem key={department._id} value={department._id}>
+                                            {department.name}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
+                        <Stack direction="row" spacing={2} justifyContent="space-between">
+                            <LocalizationProvider dateAdapter={AdapterDayjs} required>
+                                <DemoContainer components={['DatePicker']}>
+                                    <DatePicker
+                                        fullWidth
+                                        label="Hire Date *"
+                                        name="hireDate"
+                                        value={formik.values.hireDate ? dayjs(formik.values.hireDate) : null}
+                                        onChange={(newValue) => {
+                                            formik.setFieldValue('hireDate', newValue);
+                                        }}
+                                        error={formik.touched.hireDate && Boolean(formik.errors.hireDate)}
+                                        helperText={formik.touched.hireDate && formik.errors.hireDate}
+                                        onBlur={formik.handleBlur}
+                                    />
+                                </DemoContainer>
+                            </LocalizationProvider>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DemoContainer components={['DatePicker']}>
+                                    <DatePicker
+                                        fullWidth
+                                        label="Termination Date"
+                                        name="terminationDate"
+                                        value={
+                                            formik.values.terminationDate ? dayjs(formik.values.terminationDate) : null
+                                        }
+                                        onChange={(newValue) => {
+                                            formik.setFieldValue('terminationDate', newValue);
+                                        }}
+                                        error={formik.touched.terminationDate && Boolean(formik.errors.terminationDate)}
+                                        helperText={formik.touched.terminationDate && formik.errors.terminationDate}
+                                        onBlur={formik.handleBlur}
+                                    />
+                                </DemoContainer>
+                            </LocalizationProvider>
+                        </Stack>
                     </Stack>
 
                     <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>

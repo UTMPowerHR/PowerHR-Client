@@ -15,10 +15,6 @@ const hrSection = [
                 ),
             },
             {
-                title: 'Profile',
-                path: PATHS.EMPLOYEE.PROFILE,
-            },
-            {
                 subheader: 'Forms',
                 title: 'Forms',
                 items: [
@@ -56,6 +52,15 @@ const hrSection = [
                     {
                         title: 'Create Job',
                         path: PATHS.JOB.CREATE,
+                    },
+                ],
+            },
+            {
+                title: 'Analytic',
+                items: [
+                    {
+                        title: 'Turnover',
+                        path: PATHS.ANALYTIC.TURNOVER,
                     },
                 ],
             },
