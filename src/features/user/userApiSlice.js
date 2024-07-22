@@ -9,7 +9,15 @@ export const userApiSlice = apiSlice.injectEndpoints({
                 body: { user },
             }),
         }),
+        uploadProfileImage: builder.mutation({
+            query: ({ formData, id }) => ({
+                url: '/users/upload/profile-picture/' + id,
+                method: 'POST',
+                body: formData,
+                formData: true,
+            }),
+        }),
     }),
 });
 
-export const { useUpdateUserMutation } = userApiSlice;
+export const { useUpdateUserMutation, useUploadProfileImageMutation } = userApiSlice;

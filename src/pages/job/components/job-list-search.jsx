@@ -72,41 +72,13 @@ const roleOptions = [
 ];
 
 export default function JobListSearch(props) {
-    const chips = useMemo(
-        () => [
-            {
-                label: 'Type',
-                field: 'type',
-                value: 'freelance',
-                displayValue: 'Freelance',
-            },
-            {
-                label: 'Type',
-                field: 'type',
-                value: 'internship',
-                displayValue: 'Internship',
-            },
-            {
-                label: 'Level',
-                field: 'level',
-                value: 'novice',
-                displayValue: 'Novice',
-            },
-            {
-                label: 'Location',
-                field: 'location',
-                value: 'asia',
-                displayValue: 'Asia',
-            },
-            {
-                label: 'Role',
-                field: 'role',
-                value: 'webDeveloper',
-                displayValue: 'Web Developer',
-            },
-        ],
-        [],
-    );
+    const chips = useMemo(() => [], []);
+    // {
+    //     label: 'Type',
+    //     field: 'type',
+    //     value: 'freelance',
+    //     displayValue: 'Freelance',
+    // },
 
     // We memoize this part to prevent re-render issues
     const typeValues = useMemo(() => chips.filter((chip) => chip.field === 'type').map((chip) => chip.value), [chips]);

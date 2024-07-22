@@ -20,15 +20,18 @@ import {
 import { alpha } from '@mui/material/styles';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useUpdateUserMutation } from '@features/user/userApiSlice';
+import { useUpdateUserMutation, useUploadProfileImageMutation } from '@features/user/userApiSlice';
 import { setCredentials } from '@features/auth/authSlice';
-import { useState } from 'react';
+
+import { useState, useRef } from 'react';
 
 export default function Profile() {
     const user = useSelector((state) => state.auth.user);
     const token = useSelector((state) => state.auth.token);
+    const fileInput = useRef();
 
     const [updateUserMutation] = useUpdateUserMutation();
+    const [uploadProfileImageMutation] = useUploadProfileImageMutation();
     const dispatch = useDispatch();
 
     const [isEditing, setIsEditing] = useState(false);
@@ -138,6 +141,30 @@ export default function Profile() {
         },
     });
 
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const handleFileChange = (event) => {
+        setSelectedFile(event.target.files[0]);
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) {
+            alert('Please choose a file first!');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', selectedFile); // 'file' should match your backend field name
+
+        try {
+            const data = await uploadProfileImageMutation({ formData, id: user._id }).unwrap();
+            dispatch(setCredentials({ user: data, token: token }));
+            setSelectedFile(null);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     return (
         <Stack spacing={4}>
             <Card>
@@ -148,7 +175,7 @@ export default function Profile() {
                         </Grid>
                         <Grid xs={12} md={8}>
                             <Stack spacing={3}>
-                                <Stack alignItems="center" direction="row" spacing={2}>
+                                <Stack alignItems="center" direction="row" spacing={2} justifyContent="space-between">
                                     <Box
                                         sx={{
                                             borderColor: 'neutral.300',
@@ -186,7 +213,14 @@ export default function Profile() {
                                                         opacity: 1,
                                                     },
                                                 }}
+                                                onClick={() => fileInput.current.click()}
                                             >
+                                                <input
+                                                    ref={fileInput}
+                                                    type="file"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleFileChange}
+                                                />
                                                 <Stack alignItems="center" direction="row" spacing={1}>
                                                     <SvgIcon color="inherit">
                                                         <Camera01Icon />
@@ -201,7 +235,11 @@ export default function Profile() {
                                                 </Stack>
                                             </Box>
                                             <Avatar
-                                                src={user.avatar || ''}
+                                                src={
+                                                    selectedFile
+                                                        ? URL.createObjectURL(selectedFile)
+                                                        : user.profilePicture || ''
+                                                }
                                                 sx={{
                                                     height: 100,
                                                     width: 100,
@@ -213,7 +251,27 @@ export default function Profile() {
                                             </Avatar>
                                         </Box>
                                     </Box>
+                                    <Stack spacing={1} direction="row">
+                                        <Button
+                                            size="small"
+                                            onClick={() => {
+                                                setSelectedFile(null);
+                                            }}
+                                            disabled={!selectedFile}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            onClick={handleUpload}
+                                            disabled={!selectedFile}
+                                            variant="contained"
+                                        >
+                                            Upload
+                                        </Button>
+                                    </Stack>
                                 </Stack>
+
                                 <Box component="form" noValidate autoComplete="off" onSubmit={formik.handleSubmit}>
                                     <Stack spacing={2}>
                                         <TextField

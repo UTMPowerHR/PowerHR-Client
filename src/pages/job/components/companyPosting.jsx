@@ -40,6 +40,7 @@ export default function CompanyPosting(props) {
     const postings = useSelector((state) => state.job.companies[index]?.postings);
     const listIdPosting = useSelector((state) => state.job?.postings);
     const userId = useSelector((state) => state.auth.user._id);
+    const resume = useSelector((state) => state.auth.user.resume);
 
     const [createApplicationMutation] = useCreateApplicationMutation();
 
@@ -231,9 +232,16 @@ export default function CompanyPosting(props) {
                             }}
                             variant="contained"
                             fullWidth
+                            disabled={resume === undefined}
                         >
                             Apply
                         </Button>
+                    )}
+
+                    {resume === undefined && (
+                        <Stack justifyItem="center" alignItems="center">
+                            <Typography color="error">Please update your profile</Typography>
+                        </Stack>
                     )}
                 </DialogContent>
                 <DialogActions>

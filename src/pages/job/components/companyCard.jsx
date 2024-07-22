@@ -36,7 +36,7 @@ export default function CompanyCard(props) {
                         >
                             {company?.name}
                         </Link>
-                        <Typography variant="body2">This is description</Typography>
+                        <Typography variant="body2">{company?.description}</Typography>
                     </Stack>
                 </Stack>
                 <Box sx={{ mt: 2 }}>
