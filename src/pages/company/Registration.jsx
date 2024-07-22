@@ -17,7 +17,7 @@ import {
     InputAdornment,
     Alert,
 } from '@mui/material';
-import Show from '@components/Show';
+import Show from '@components/show';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { useFormik } from 'formik';
