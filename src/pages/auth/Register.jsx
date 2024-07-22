@@ -20,11 +20,11 @@ import {
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { useRegisterApplicantMutation } from '../../features/auth/authApiSlice';
+import { useRegisterApplicantMutation } from '@features/auth/authApiSlice';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import KeyboardCapslockRoundedIcon from '@mui/icons-material/KeyboardCapslockRounded';
-import PATHS from '../../constants/routes/paths';
-import Show from '../../components/show';
+import PATHS from '@constants/routes/paths';
+import Show from '@components/show';
 import { useState, useEffect } from 'react';
 
 const getCharacterValidationError = (str) => {

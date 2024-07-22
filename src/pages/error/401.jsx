@@ -32,7 +32,7 @@ const Page = () => {
                         <CardMedia
                             component="img"
                             alt="Not authorized"
-                            image="assets/errors/401.png"
+                            image="/assets/errors/401.png"
                             sx={{
                                 height: 'auto',
                                 maxWidth: '100%',

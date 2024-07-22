@@ -2,13 +2,7 @@ import PropTypes from 'prop-types';
 import { Layout } from './layout';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
-import {
-    adminSection,
-    applicantSection,
-    employeeSection,
-    hrSection,
-    systemAdminSection,
-} from '../../constants/routes/sidebar';
+import { adminSection, applicantSection, employeeSection, hrSection, systemAdminSection } from '@layouts/sidebar';
 
 const getSections = (role) => {
     if (role === 'Applicant') {

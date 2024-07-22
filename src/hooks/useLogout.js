@@ -16,6 +16,11 @@ const useLogout = () => {
         // } catch (err) {
         //     console.error(err);
         // }
+
+        // delete the token from local storage
+        localStorage.removeItem('persist:root');
+        // reload
+        window.location.reload();
     };
 
     return logoutUser;

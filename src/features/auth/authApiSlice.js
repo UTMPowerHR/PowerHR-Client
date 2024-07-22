@@ -30,9 +30,10 @@ export const authApiSlice = apiSlice.injectEndpoints({
             }),
         }),
         activateAccount: builder.mutation({
-            query: (token) => ({
+            query: ({ token, password, confirmPassword }) => ({
                 url: `/auth/activate-account?token=${token}`,
-                method: 'GET',
+                method: 'POST',
+                body: { password, confirmPassword },
             }),
         }),
         registerApplicant: builder.mutation({
@@ -40,6 +41,13 @@ export const authApiSlice = apiSlice.injectEndpoints({
                 url: '/auth/register/applicant',
                 method: 'POST',
                 body: { ...data },
+            }),
+        }),
+        changePassword: builder.mutation({
+            query: ({ oldPassword, newPassword, confirmPassword, id }) => ({
+                url: '/auth/change-password/' + id,
+                method: 'POST',
+                body: { oldPassword, newPassword, confirmPassword },
             }),
         }),
     }),
@@ -52,4 +60,5 @@ export const {
     useVerifyTokenQuery,
     useActivateAccountMutation,
     useRegisterApplicantMutation,
+    useChangePasswordMutation,
 } = authApiSlice;
