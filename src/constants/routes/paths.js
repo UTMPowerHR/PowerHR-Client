@@ -15,6 +15,7 @@ const PATHS = {
             EMPLOYEES: '/company/manage/employees',
             DEPARTMENTS: '/company/manage/departments',
         },
+        FIREEMPLOYEE: '/company/fireemployee',
     },
     DASHBOARD: {
         INDEX: '/dashboard',

@@ -40,6 +40,10 @@ const hrSection = [
                         title: 'Manage Employees',
                         path: PATHS.COMPANY.MANAGE.EMPLOYEES,
                     },
+                    {
+                        title: 'FireEmployee',
+                        path: PATHS.COMPANY.FIREEMPLOYEE,
+                    },
                 ],
             },
             {
