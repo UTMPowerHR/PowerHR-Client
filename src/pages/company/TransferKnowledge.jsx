@@ -1,20 +1,27 @@
-import { useState } from 'react';
-import TableEmployee from './components/terminateTableEmployee';
+import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import TableDocument from './components/tableDocument';
 
 function TransferKnowledge() {
+    const { employeeId } = useParams();  // Get employeeId from the URL
     const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-    const handleEmployeeSelect = (employee) => {
-        setSelectedEmployee(employee);
-    };
+    console.log(employeeId);
+    useEffect(() => {
+        if (employeeId) {
+            // Mock fetching employee data based on employeeId
+            console.log(`Fetching data for employee with ID: ${employeeId}`);
+            // Simulate setting the employee
+            setSelectedEmployee({ id: employeeId, name: 'John Doe' }); // Replace with actual data fetching logic
+        }
+    }, [employeeId]);
 
     return (
         <>
+
             {selectedEmployee ? (
-                <TableDocument employee={selectedEmployee} />
+                <TableDocument selectedEmployeeId={selectedEmployee.id} />
             ) : (
-                <TableEmployee onEmployeeSelect={handleEmployeeSelect} />
+                <p>Loading employee data...</p> // Loading state until employee data is available
             )}
         </>
     );
