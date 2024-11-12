@@ -31,6 +31,10 @@ const hrSection = [
                         title: 'Profile',
                         path: PATHS.COMPANY.PROFILE,
                     },
+                    {
+                        title: 'Terminate Employee',
+                        path: PATHS.COMPANY.TERMINATE
+                    },
                 ],
             },
             {
@@ -41,8 +45,12 @@ const hrSection = [
                         path: PATHS.COMPANY.MANAGE.EMPLOYEES,
                     },
                     {
+
                         title: 'Terminate Employee',
                         path: PATHS.COMPANY.FIREEMPLOYEE,
+                        title: 'Rehire Employees',
+                        path: PATHS.COMPANY.REHIRE,
+
                     },
                 ],
             },
