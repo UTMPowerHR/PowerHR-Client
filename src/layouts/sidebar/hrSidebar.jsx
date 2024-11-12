@@ -45,14 +45,12 @@ const hrSection = [
                         path: PATHS.COMPANY.MANAGE.EMPLOYEES,
                     },
                     {
-
                         title: 'Terminate Employee',
                         path: PATHS.COMPANY.FIREEMPLOYEE,
                     },
                     {
                         title: 'Rehire Employees',
                         path: PATHS.COMPANY.REHIRE,
-
                     },
                 ],
             },
