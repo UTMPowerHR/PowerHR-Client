@@ -23,7 +23,7 @@ import { setEmployees } from '@features/company/companySlice';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
-function TerminateTableEmployees() {
+function TerminateEmployee() {
     const user = useSelector((state) => state.auth.user);
     const employees = useSelector((state) => state.company.employees);
     const dispatch = useDispatch();
@@ -38,7 +38,7 @@ function TerminateTableEmployees() {
     }, [data, dispatch, isSuccess]);
 
     const handleManageDocument = (id) => {
-        navigate(`/transfer-knowledge/${id}`);
+        navigate(`/company/transferknowledge/${id}`);
     };
 
     return (
@@ -92,4 +92,4 @@ function TerminateTableEmployees() {
     );
 }
 
-export default TerminateTableEmployees;
+export default TerminateEmployee;
