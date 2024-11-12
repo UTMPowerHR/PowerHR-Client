@@ -35,6 +35,7 @@ import {
 } from '@features/company/companyApiSlice';
 import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
+import emailjs from 'emailjs-com';
 
 dayjs.extend(utc);
 
@@ -46,11 +47,10 @@ function TableEmployees() {
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [confirmationOpen, setConfirmationOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pendingTermination, setPendingTermination] = useState(null);
 
     const [updateEmployee] = useUpdateEmployeeMutation();
-    const [registerEmployee] = useRegisterEmployeeMutation();
-    const { data: departmentsData } = useGetDepartmentsQuery(user.company);
+    const [terminationLetter, setTerminationLetter] = useState(null);
+    const [fileError, setFileError] = useState('');
 
     const formik = useFormik({
         initialValues: {
@@ -87,31 +87,73 @@ function TableEmployees() {
         setConfirmationOpen(true);
     };
 
-    // Confirm termination with delay
+    // Function to send termination email
+    const sendTerminationEmail = async (employee) => {
+        if (!terminationLetter) {
+            console.error('Termination letter is required to send an email.');
+            return;
+        }
+
+        // Prepare email parameters
+        const emailParams = {
+            to_name: `${employee.firstName} ${employee.lastName}`,
+            to_email: employee.email,
+            subject: 'Termination Notice',
+            termination_date: dayjs().add(1, 'month').format('DD MMM YYYY'),
+            company: user.company,
+            message: 'Please find the attached termination letter.',
+        };
+
+        try {
+            // Send the email using EmailJS
+            await emailjs.send(
+                service_24y4znc,
+                template_t8hscf8,
+                emailParams,
+                RXtJM-VrBVUEqhT-y
+            );
+            console.log('Termination email sent successfully');
+        } catch (error) {
+            console.error('Failed to send termination email:', error);
+        }
+    };
+
+
+    // Modified confirm termination function
     const confirmTerminateEmployee = async () => {
         setConfirmationOpen(false);
-        setPendingTermination(selectedEmployee._id); // Set pending state
 
-        setTimeout(async () => {
-            try {
-                // Set the current date as the termination date
-                const terminationDate = dayjs().format(); // Current date
-                const updatedEmployee = { ...selectedEmployee, terminationDate: terminationDate };
-
-                await updateEmployee(updatedEmployee); // Update employee in the database
-
-                // Update local state after successful termination
-                dispatch(setEmployees(employees.map(emp => emp._id === id ? updatedEmployee : emp)));
-
-
-                setPendingTermination(null); // Clear pending state
-                setSelectedEmployee(null); // Reset selected employee
-            } catch (error) {
-                console.error("Failed to terminate employee:", error);
-                setPendingTermination(null); // Clear pending state on error
+        try {
+            if (!terminationLetter) {
+                console.error('Termination letter is required');
+                return;
             }
-        }, 3000);
 
+            // Set the current date as the termination date
+            const terminationDate = dayjs().add(1, 'month').format(); // One month from now
+            const updatedEmployee = { ...selectedEmployee, terminationDate };
+
+            // Create FormData to send the file
+            const formData = new FormData();
+            formData.append('terminationLetter', terminationLetter);
+            formData.append('terminationDate', terminationDate);
+            formData.append('employeeId', selectedEmployee._id);
+
+            await updateEmployee(updatedEmployee); // Update employee in the database
+
+            // Send termination email
+            await sendTerminationEmail(selectedEmployee);
+
+            // Update local state after successful termination
+            dispatch(setEmployees(
+                employees.map(emp => emp._id === selectedEmployee._id ? updatedEmployee : emp)
+            ));
+
+            setSelectedEmployee(null); // Reset selected employee
+            setTerminationLetter(null); // Clear file input
+        } catch (error) {
+            console.error('Failed to terminate employee:', error);
+        }
     };
 
     const dispatch = useDispatch();
@@ -131,14 +173,30 @@ function TableEmployees() {
     };
 
     // Filter employees based on the search term
+    // Filter employees based on the search term and exclude the currently logged-in user
     const filteredEmployees = employees.filter((employee) => {
         const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
         const email = employee.email.toLowerCase();
+
+        // Exclude the logged-in user from the list
         return (
-            fullName.includes(searchTerm.toLowerCase()) ||
-            email.includes(searchTerm.toLowerCase())
+            employee._id !== user._id &&
+            (fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase()))
         );
     });
+
+
+    // Handle file upload change
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file && file.size > 5 * 1024 * 1024) { // Limit file size to 5MB
+            setFileError('File size must be less than 5MB');
+            setTerminationLetter(null);
+        } else {
+            setFileError('');
+            setTerminationLetter(file);
+        }
+    };
 
     return (
         <>
@@ -191,9 +249,9 @@ function TableEmployees() {
                                         </TableCell>
                                         <TableCell>
                                             {isTerminated
-                                                ? dayjs(employee.terminationDate).format('DD MMM YYYY')  // Display termination date if in the past
+                                                ? dayjs(employee.terminationDate).format('DD MMM YYYY')
                                                 : isPendingTermination
-                                                    ? dayjs(employee.terminationDate).format('DD MMM YYYY')  // Display "Pending Termination" if in the future
+                                                    ? dayjs(employee.terminationDate).format('DD MMM YYYY')
                                                     : 'Active'}
                                         </TableCell>
                                         <TableCell align="right">
@@ -210,19 +268,19 @@ function TableEmployees() {
                                                         fontWeight: 'bold',
                                                         '&:hover': {
                                                             backgroundColor: 'rgba(75, 132, 194, 1)',
-
                                                         },
-
                                                     }}
-                                                >Transfer</Button>
+                                                >
+                                                    Transfer
+                                                </Button>
                                             ) : (
                                                 <IconButton
                                                     onClick={() => handleTerminateClick(employee._id)}
                                                     color="error"
                                                     sx={{
-                                                        border: pendingTermination === employee._id ? '0px solid' : '2px solid',
+                                                        border: '2px solid',
                                                         borderColor: 'error.main',
-                                                        color: "error",
+                                                        color: 'error',
                                                         backgroundColor: 'transparent',
                                                         borderRadius: '8px',
                                                         padding: '6px',
@@ -230,13 +288,11 @@ function TableEmployees() {
                                                         fontWeight: 'bold',
                                                         '&:hover': {
                                                             backgroundColor: 'rgba(255, 0, 0, 1)',
-                                                            color: '#1C2536'
+                                                            color: '#1C2536',
                                                         },
-
                                                     }}
-                                                    disabled={pendingTermination === employee._id}
                                                 >
-                                                    {pendingTermination === employee._id ? 'Notified' : 'Terminate'}
+                                                    Terminate
                                                 </IconButton>
                                             )}
                                         </TableCell>
@@ -244,6 +300,7 @@ function TableEmployees() {
                                 );
                             })}
                         </TableBody>
+
                     </Table>
                 </Scrollbar>
                 <TablePagination
@@ -259,15 +316,36 @@ function TableEmployees() {
             <Dialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)}>
                 <DialogTitle>Confirm Termination</DialogTitle>
                 <DialogContent>
-                    <Typography>
+                    <Typography sx={{ mb: 2 }}>
                         Are you sure you want to terminate {selectedEmployee?.firstName} {selectedEmployee?.lastName}?
                     </Typography>
+
+                    {/* File Upload Input */}
+                    <Stack direction="column" spacing={2} sx={{ mt: 2 }}>
+                        <Typography variant="body2">Please upload the Termination Letter:</Typography>
+                        <OutlinedInput
+                            type="file"
+                            onChange={handleFileChange}
+                            fullWidth
+                            inputProps={{ accept: '.pdf,.doc,.docx' }}
+                            error={!!fileError}
+                        />
+                        {fileError && (
+                            <Typography color="error" variant="body2">
+                                {fileError}
+                            </Typography>
+                        )}
+                    </Stack>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setConfirmationOpen(false)} color="primary">
                         Cancel
                     </Button>
-                    <Button onClick={confirmTerminateEmployee} color="error">
+                    <Button
+                        onClick={confirmTerminateEmployee}
+                        color="error"
+                        disabled={!terminationLetter}
+                    >
                         Confirm
                     </Button>
                 </DialogActions>
