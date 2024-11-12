@@ -107,10 +107,10 @@ function TableEmployees() {
         try {
             // Send the email using EmailJS
             await emailjs.send(
-                service_24y4znc,
-                template_t8hscf8,
+                'service_24y4znc',
+                'template_t8hscf8',
                 emailParams,
-                RXtJM-VrBVUEqhT-y
+                'RXtJM-VrBVUEqhT-y'
             );
             console.log('Termination email sent successfully');
         } catch (error) {
