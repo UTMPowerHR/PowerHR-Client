@@ -30,7 +30,10 @@ const privateRoutes = (
                 <Route path={PATHS.COMPANY.MANAGE.DEPARTMENTS} element={<Company.Departments />} />
                 <Route path={PATHS.COMPANY.MANAGE.INDEX} element={<Company.ManageCompany />} />
                 <Route path={PATHS.COMPANY.PROFILE} element={<Company.ProfileCompany />} />
+
+                <Route path={PATHS.COMPANY.FIREEMPLOYEE} element={<Company.FireEmployee />} />
                 <Route path={PATHS.COMPANY.REHIRE} element={<Company.Rehire />} />
+
             </Route>
 
             <Route>
