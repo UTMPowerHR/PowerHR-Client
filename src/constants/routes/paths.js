@@ -15,6 +15,7 @@ const PATHS = {
             EMPLOYEES: '/company/manage/employees',
             DEPARTMENTS: '/company/manage/departments',
         },
+        DOCUMENTLIST: '/company/transferknowledge',
     },
     DASHBOARD: {
         INDEX: '/dashboard',
@@ -81,6 +82,8 @@ const PATHS = {
         },
         LIST: '/job/list',
         FILTER: '/job/filter',
+        EXAMPLE: '/job/example',
+        TRANSFER_DOCUMENT: '/job/transferdocument',
     },
     APPLICATION: {
         MANAGE: {

@@ -31,6 +31,10 @@ const hrSection = [
                         title: 'Profile',
                         path: PATHS.COMPANY.PROFILE,
                     },
+                    {
+                        title: 'Terminate Employee',
+                        path: PATHS.COMPANY.DOCUMENTLIST
+                    },
                 ],
             },
             {
