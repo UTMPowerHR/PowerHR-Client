@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Paper, Typography, Button, Box } from '@mui/material';
 
-function tableDocument({ selectedEmployeeId }) {
+function TableDocument({ selectedEmployeeId }) {
     const [documents, setDocuments] = useState([
         { id: 1, name: 'Document1.pdf', type: 'PDF', date: '2024-11-01' },
         { id: 2, name: 'Document2.docx', type: 'Word Document', date: '2024-11-02' },
@@ -158,4 +158,4 @@ function tableDocument({ selectedEmployeeId }) {
     );
 }
 
-export default tableDocument;
+export default TableDocument;
