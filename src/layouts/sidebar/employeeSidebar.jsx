@@ -24,6 +24,10 @@ const employeeSection = [
                     },
                 ],
             },
+            {
+                title: 'Transfer Document',
+                path: PATHS.JOB.TRANSFER_DOCUMENT,
+            },
         ],
     },
 ];

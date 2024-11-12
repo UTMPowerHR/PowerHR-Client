@@ -43,6 +43,8 @@ const privateRoutes = (
                 <Route path={PATHS.JOB.LIST} element={<Job.ListJob />} />
                 <Route path={PATHS.JOB.INDEX} element={<Job.Browse />} />
                 <Route path={PATHS.JOB.EDIT.PATH} element={<Job.CreateJob />} />
+                <Route path={PATHS.JOB.EXAMPLE} element={<Job.Example />} />
+                <Route path={PATHS.JOB.TRANSFER_DOCUMENT} element={<Job.TransferDocument />} /> 
             </Route>
 
             <Route>
@@ -56,6 +58,8 @@ const privateRoutes = (
 
             <Route>
                 <Route path={PATHS.ANALYTIC.TURNOVER} element={<Company.TurnOver />} />
+                <Route path={PATHS.COMPANY.DOCUMENTLIST} element={<Company.TransferKnowledge />} />
+                <Route path={PATHS.COMPANY.TERMINATE} element={<Company.TerminateEmployee />} />
             </Route>
         </Route>
     </Route>
