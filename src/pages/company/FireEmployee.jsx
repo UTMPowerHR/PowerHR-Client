@@ -1,5 +1,5 @@
 import { Grid, Typography } from '@mui/material';
-import EmployeesTable from './components/testTableFireEmployees';
+import EmployeesTable from './components/tableFireEmployee';
 
 function FireEmployee() {
     return (
