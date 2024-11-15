@@ -41,6 +41,7 @@ import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
 import emailjs from 'emailjs-com';
 import determineRole from './roleHierarchy';
+import { useNavigate } from 'react-router-dom';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -61,6 +62,7 @@ function TableEmployees() {
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [selectedDepartments, setSelectedDepartments] = useState([]);
+    const navigate = useNavigate();
 
     // Extract department names from the fetched data
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
@@ -285,6 +287,10 @@ function TableEmployees() {
         );
     };
 
+    const handleManageDocument = (id) => {
+        navigate(`/company/transferknowledge/${id}`);
+    };
+
 
     return (
         <>
@@ -414,6 +420,7 @@ function TableEmployees() {
                                                                 backgroundColor: 'rgba(75, 132, 194, 1)',
                                                             },
                                                         }}
+                                                        onClick={() => handleManageDocument(employee._id)}
                                                     >
                                                         Manage Document
                                                     </Button>

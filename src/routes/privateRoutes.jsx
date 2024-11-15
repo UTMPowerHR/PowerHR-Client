@@ -62,7 +62,6 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.ANALYTIC.TURNOVER} element={<Company.TurnOver />} />
                 <Route path={PATHS.COMPANY.DOCUMENTLIST} element={<Company.TransferKnowledge />} />
-                <Route path={PATHS.COMPANY.TERMINATE} element={<Company.TerminateEmployee />} />
             </Route>
         </Route>
     </Route>
