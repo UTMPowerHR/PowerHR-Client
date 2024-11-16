@@ -31,13 +31,17 @@ import {
 import { setEmployees } from '@features/company/companySlice';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 dayjs.extend(utc);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 function TableRehireEmployees() {
     const user = useSelector((state) => state.auth.user);
@@ -162,31 +166,35 @@ function TableRehireEmployees() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {employees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((employee) => (
-                                <TableRow key={employee._id}>
-                                    <TableCell padding="checkbox"><Checkbox /></TableCell>
-                                    <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                                    <TableCell>{employee.email}</TableCell>
-                                    <TableCell>{employee.jobTitle}</TableCell>
-                                    <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
-                                    <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
-                                    <TableCell align="right">
-                                        {employee.terminationDate ? (
+                        {employees
+                            .filter((employee) => employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day'))
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((employee) => {
+                                const isTerminationFutureOrToday = dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
+                                
+                                return (
+                                    <TableRow key={employee._id}>
+                                        <TableCell padding="checkbox"><Checkbox /></TableCell>
+                                        <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                                        <TableCell>{employee.email}</TableCell>
+                                        <TableCell>{employee.jobTitle}</TableCell>
+                                        <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
+                                        <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
+                                        <TableCell align="right">
                                             <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={() => handleOpenDialog(employee)}
-                                            disabled={rehiring}
-                                        >
-                                            {rehiring ? 'Rehiring' : 'Rehire'}
-                                        </Button>
-                                    ) : (
-                                        <Typography color="textSecondary">Active</Typography>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={() => handleOpenDialog(employee)}
+                                                disabled={rehiring || isTerminationFutureOrToday}
+                                            >
+                                                {rehiring ? 'Rehiring' : 'Rehire'}
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                    </TableBody>
+
                     </Table>
                 </Scrollbar>
                 <TablePagination
@@ -203,7 +211,7 @@ function TableRehireEmployees() {
             <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
                 <DialogContent>
                     <Stack spacing={2}>
-                        <Typography variant="h5">Rehire Employee</Typography>
+                        <Typography variant="h5">Edit Rehire Employee Profile</Typography>
                         <TextField
                             fullWidth
                             label="First Name"
