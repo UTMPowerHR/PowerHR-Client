@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Paper, Typography, Button, Box, Stack } from '@mui/material';
+import utc from 'dayjs/plugin/utc';
+import dayjs from 'dayjs';
+
+dayjs.extend(utc);
 
 function TableDocument({ selectedEmployee }) {
     const [documents, setDocuments] = useState([
-        { id: 1, name: 'Document1.pdf', type: 'PDF', date: '2024-11-01', size: 1 },
-        { id: 2, name: 'Document2.docx', type: 'Word Document', date: '2024-11-02', size: 5 },
+        { id: 1, name: 'Document1.pdf', type: 'PDF', date: '2024-11-01', size: "32KB" },
+        { id: 2, name: 'Document2.docx', type: 'Word Document', date: '2024-11-02', size: "52KB" },
         // Add more mock data as needed
     ]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -39,6 +43,19 @@ function TableDocument({ selectedEmployee }) {
         }
     };
 
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const k = 1000; // Changed to 1000 instead of 1024
+        const dm = 2;   // Decimal places
+        
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const size = Math.round(parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) * 100) / 100; //Round the file size by 2 decimal points    
+        
+        return `${size} ${units[i]}`;
+    }
+
     const handleUpload = () => {
         if (selectedFile) {
             // Mock uploading process and add the document to the list
@@ -46,7 +63,8 @@ function TableDocument({ selectedEmployee }) {
                 id: documents.length + 1,
                 name: selectedFile.name,
                 type: getFileType(selectedFile.name),
-                date: new Date().toISOString().split('T')[0]  // current date
+                date: new Date().toISOString().split('T')[0],  // current date
+                size: formatFileSize(selectedFile.size),
             };
             setDocuments(prevDocs => [...prevDocs, newDoc]);
             setSelectedFile(null); // Clear the selected file
@@ -60,14 +78,19 @@ function TableDocument({ selectedEmployee }) {
     return (
 
         <Stack spacing={4}>
+            <Typography variant="h4">Transfer Digital Document</Typography>
+
             <Paper>
                 <Stack spacing={2} sx={{ p: 4 }}>
-                    <Typography variant="h4">Transfer Digital Document</Typography>
+                    <Typography variant="h5">Employee Details</Typography>
                     <Typography variant="body1">
-                        Name: {selectedEmployee?.name}
+                        <b>Name: </b> {selectedEmployee ? selectedEmployee?.name : ""}
                     </Typography>
                     <Typography variant="body1">
-                        Email: {selectedEmployee?.email}
+                        <b>Email: </b>  {selectedEmployee ? selectedEmployee?.email : ""}
+                    </Typography>
+                    <Typography variant="body1">
+                        <b>Termination Date: </b>  {selectedEmployee ? dayjs(selectedEmployee?.terminationDate).format("DD MMMM YYYY") : ""}
                     </Typography>
                 </Stack>     
             </Paper>
@@ -154,7 +177,7 @@ function TableDocument({ selectedEmployee }) {
                             <TableRow>
                                 <TableCell sx={{ color: '#e0e0e0' }}>Document Name</TableCell>
                                 <TableCell sx={{ color: '#e0e0e0' }}>Document Type</TableCell>
-                                <TableCell sx={{ color: '#e0e0e0' }}>Size (MB)</TableCell>
+                                <TableCell sx={{ color: '#e0e0e0' }}>Size</TableCell>
                                 <TableCell sx={{ color: '#e0e0e0' }}>Upload Date</TableCell>
                             </TableRow>
                         </TableHead>
@@ -163,7 +186,7 @@ function TableDocument({ selectedEmployee }) {
                                 <TableRow key={doc.id}>
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.name}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.type}</TableCell>
-                                    <TableCell sx={{ color: '#e0e0e0' }}>{doc.size}MB</TableCell>
+                                    <TableCell sx={{ color: '#e0e0e0' }}>{doc.size}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.date}</TableCell>
                                 </TableRow>
                             ))}

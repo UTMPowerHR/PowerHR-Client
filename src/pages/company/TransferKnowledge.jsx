@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import TableDocument from './components/tableDocument';
 import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
-import { useGetEmployeesQuery } from '@features/company/companyApiSlice';
+import { useGetCompanyProfileQuery, useGetEmployeesQuery } from '@features/company/companyApiSlice';
 
 function TransferKnowledge() {
     const { employeeId } = useParams();  // Get employeeId from the URL
@@ -20,19 +20,22 @@ function TransferKnowledge() {
     }, [data, dispatch, isSuccess]);
 
     useEffect(() => {
-        if (employeeId) {
+        if (employeeId && employees?.length > 0) {
             const employee = employees.find((employee) => employee._id == employeeId);
-            setSelectedEmployee({ id: employee._id, name: employee.firstName + " " + employee.lastName, email: employee.email }); // Replace with actual data fetching logic
+            setSelectedEmployee({ id: employee._id, name: employee.firstName + " " + employee.lastName, 
+                                  email: employee.email,
+                                  terminationDate: employee.terminationDate,
+                                }); // Replace with actual data fetching logic
         }
-    }, [employeeId]);
-
+    }, [employeeId, employees]);
+    
     return (
         <>
 
             {selectedEmployee ? (
                 <TableDocument selectedEmployee={selectedEmployee} />
             ) : (
-                <p>Loading employee data...</p> // Loading state until employee data is available
+                <> </>
             )}
         </>
     );
