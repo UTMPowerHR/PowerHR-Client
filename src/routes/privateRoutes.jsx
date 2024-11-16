@@ -30,7 +30,10 @@ const privateRoutes = (
                 <Route path={PATHS.COMPANY.MANAGE.DEPARTMENTS} element={<Company.Departments />} />
                 <Route path={PATHS.COMPANY.MANAGE.INDEX} element={<Company.ManageCompany />} />
                 <Route path={PATHS.COMPANY.PROFILE} element={<Company.ProfileCompany />} />
+
+                <Route path={PATHS.COMPANY.FIREEMPLOYEE} element={<Company.FireEmployee />} />
                 <Route path={PATHS.COMPANY.REHIRE} element={<Company.Rehire />} />
+
             </Route>
 
             <Route>
@@ -59,7 +62,6 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.ANALYTIC.TURNOVER} element={<Company.TurnOver />} />
                 <Route path={PATHS.COMPANY.DOCUMENTLIST} element={<Company.TransferKnowledge />} />
-                <Route path={PATHS.COMPANY.TERMINATE} element={<Company.TerminateEmployee />} />
             </Route>
         </Route>
     </Route>
