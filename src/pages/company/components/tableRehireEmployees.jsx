@@ -19,6 +19,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    FormControlLabel,
 } from '@mui/material';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,30 +32,42 @@ import {
 import { setEmployees } from '@features/company/companySlice';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import determineRole from './roleHierarchy';
 
 dayjs.extend(utc);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 function TableRehireEmployees() {
     const user = useSelector((state) => state.auth.user);
     const employees = useSelector((state) => state.company.employees);
     const [open, setOpen] = useState(false);
-    const [rehiring, setRehiring] = useState(false); // Track rehiring status
-
-    const [updateEmployee] = useUpdateEmployeeMutation();
-    const { data: departmentsData } = useGetDepartmentsQuery(user.company);
-
+    const [rehiring, setRehiring] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    // Add missing state variables
+    const [selectedRoles, setSelectedRoles] = useState([]);
+    const [selectedDepartments, setSelectedDepartments] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
     const dispatch = useDispatch();
 
+    const [updateEmployee] = useUpdateEmployeeMutation();
+    const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const { data, isSuccess } = useGetEmployeesQuery(user.company);
+    const [requiredRehirings, setRequiredTerminations] = useState(5); // Initial count
+
+    const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
+    const availableRoles = [...new Set(employees.map(employee => employee.jobTitle))];
 
     useEffect(() => {
         if (isSuccess) {
@@ -64,33 +77,30 @@ function TableRehireEmployees() {
 
     const handleRehire = async () => {
         if (selectedEmployee) {
-            setOpen(false);  // Close the dialog immediately after clicking "Rehire"
-            setRehiring(true);  // Set rehiring status to true
-            const rehireDate = dayjs().utc().add(3, 'day').format(); // Rehire date set 3 days in the future
-    
+            setOpen(false);
+            setRehiring(true);
+            setIsRehireLoading(true);
+
             try {
-                // Mock delay to simulate the waiting period
-                setTimeout(async () => {
-                    await updateEmployee({
-                        ...selectedEmployee,
-                        jobTitle: formik.values.jobTitle,
-                        salary: formik.values.salary,
-                        department: formik.values.department,
-                        hireDate: rehireDate,
-                        terminationDate: null,
-                    }).unwrap();
-    
-                    dispatch(setEmployees(data.employees));
-                    formik.resetForm();
-                    setRehiring(false); // Reset rehiring status after completion
-                }, 3000); // Mock 3-second delay (replace with actual delay logic if needed)
+                await updateEmployee({
+                    ...selectedEmployee,
+                    jobTitle: formik.values.jobTitle,
+                    salary: formik.values.salary,
+                    department: formik.values.department,
+                    hireDate: formik.values.hireDate,
+                    terminationDate: null,
+                }).unwrap();
+
+                dispatch(setEmployees(data.employees));
+                formik.resetForm();
             } catch (error) {
                 console.error("Failed to rehire employee:", error);
-                setRehiring(false); // Reset on error
+            } finally {
+                setRehiring(false);
+                setIsRehireLoading(false);
             }
         }
     };
-    
 
     const formik = useFormik({
         initialValues: {
@@ -121,7 +131,6 @@ function TableRehireEmployees() {
 
     const handleOpenDialog = (employee) => {
         setSelectedEmployee(employee);
-
         formik.setValues({
             firstName: employee.firstName,
             lastName: employee.lastName,
@@ -134,8 +143,57 @@ function TableRehireEmployees() {
             gender: employee.gender,
             terminationDate: employee.terminationDate,
         });
-
         setOpen(true);
+    };
+
+    const filteredEmployees = employees.filter((employee) => {
+        const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
+        const email = employee.email.toLowerCase();
+        const role = determineRole(employee.jobTitle);
+        const searchTermLower = searchTerm.toLowerCase();
+
+        // Check if employee is terminated (terminationDate is in the past or today)
+        const isTerminated = employee.terminationDate &&
+            dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
+
+        // Check if employee is scheduled to be hired (hireDate is in the future)
+        const isScheduledForHire = employee.hireDate &&
+            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
+
+        // Check if the employee matches the selected filters
+        const roleMatches = selectedRoles.length === 0 || selectedRoles.includes(employee.jobTitle);
+        const departmentMatches =
+            selectedDepartments.length === 0 ||
+            departmentsData?.departments
+                .filter((dept) => selectedDepartments.includes(dept.name))
+                .some((dept) => dept._id === employee.department);
+
+        const searchMatches = searchTerm === '' ||
+            fullName.includes(searchTermLower) ||
+            email.includes(searchTermLower);
+
+        return (
+            employee._id !== user._id &&
+            searchMatches &&
+            role <= 1 &&
+            roleMatches &&
+            departmentMatches &&
+            (isTerminated || isScheduledForHire) // Show only terminated or scheduled employees
+        );
+    });
+
+    const handleRoleChange = (event) => {
+        const { value, checked } = event.target;
+        setSelectedRoles((prevRoles) =>
+            checked ? [...prevRoles, value] : prevRoles.filter((role) => role !== value)
+        );
+    };
+
+    const handleDepartmentChange = (event) => {
+        const { value, checked } = event.target;
+        setSelectedDepartments((prevDepartments) =>
+            checked ? [...prevDepartments, value] : prevDepartments.filter((dept) => dept !== value)
+        );
     };
 
     const handlePageChange = (event, newPage) => setPage(newPage);
@@ -143,196 +201,256 @@ function TableRehireEmployees() {
 
     return (
         <>
-            <Card>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
-                    <Typography variant="h5">Former Employees</Typography>
-                </Stack>
-                <Divider />
-                <Scrollbar>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell padding="checkbox"><Checkbox /></TableCell>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Email</TableCell>
-                                <TableCell>Role</TableCell>
-                                <TableCell>Joined</TableCell>
-                                <TableCell>Terminate</TableCell>
-                                <TableCell align="right">Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {employees.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((employee) => (
-                                <TableRow key={employee._id}>
-                                    <TableCell padding="checkbox"><Checkbox /></TableCell>
-                                    <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                                    <TableCell>{employee.email}</TableCell>
-                                    <TableCell>{employee.jobTitle}</TableCell>
-                                    <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
-                                    <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
-                                    <TableCell align="right">
-                                        {employee.terminationDate ? (
-                                            <Button
-                                            variant="contained"
-                                            color="primary"
-                                            onClick={() => handleOpenDialog(employee)}
-                                            disabled={rehiring}
-                                        >
-                                            {rehiring ? 'Rehiring' : 'Rehire'}
-                                        </Button>
-                                    ) : (
-                                        <Typography color="textSecondary">Active</Typography>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Scrollbar>
-                <TablePagination
-                    component="div"
-                    count={employees.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handlePageChange}
-                    onRowsPerPageChange={handleRowsPerPageChange}
-                    rowsPerPageOptions={[5, 10, 25]}
-                />
-            </Card>
+            <Stack direction="row" spacing={2} p={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
+                <Stack direction="column" spacing={4} p={2}>
+                    {/* Role Filters */}
+                    <Stack direction="column">
+                        <Typography variant="subtitle1">Filter by Role</Typography>
+                        {availableRoles.map((role) => (
+                            <FormControlLabel
+                                key={role}
+                                control={
+                                    <Checkbox
+                                        value={role}
+                                        checked={selectedRoles.includes(role)}
+                                        onChange={handleRoleChange}
+                                    />
+                                }
+                                label={role}
+                            />
+                        ))}
+                    </Stack>
 
-            <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <Typography variant="h5">Rehire Employee</Typography>
+                    {/* Department Filters */}
+                    <Stack direction="column">
+                        <Typography variant="subtitle1">Filter by Department</Typography>
+                        {departmentOptions.map((dept) => (
+                            <FormControlLabel
+                                key={dept}
+                                control={
+                                    <Checkbox
+                                        value={dept}
+                                        checked={selectedDepartments.includes(dept)}
+                                        onChange={handleDepartmentChange}
+                                    />
+                                }
+                                label={dept}
+                            />
+                        ))}
+                    </Stack>
+                </Stack>
+                <Card sx={{ flex: 2, minWidth: '60%', height: '100%' }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
+                        <Typography variant="h5">Former Employees</Typography>
+                        <Typography
+                            variant="h6"
+                            color={requiredRehirings > 0 ? 'error' : 'success'}
+                        >
+                            {requiredRehirings > 0
+                                ? `Required Rehiring Remaining: ${requiredRehirings}`
+                                : 'Rehiring Is Not Necessary! For Now...'
+                            }
+                        </Typography>
                         <TextField
-                            fullWidth
-                            label="First Name"
-                            name="firstName"
-                            onBlur={formik.handleBlur}
-                            onChange={formik.handleChange}
-                            value={formik.values.firstName}
-                            error={formik.touched.firstName && Boolean(formik.errors.firstName)}
-                            helperText={formik.touched.firstName && formik.errors.firstName}
-                            disabled
+                            placeholder="Search employees..."
+                            variant="outlined"
+                            size="small"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+
                         />
-                        <TextField
-                            fullWidth
-                            label="Last Name"
-                            name="lastName"
-                            onBlur={formik.handleBlur}
-                            onChange={formik.handleChange}
-                            value={formik.values.lastName}
-                            error={formik.touched.lastName && Boolean(formik.errors.lastName)}
-                            helperText={formik.touched.lastName && formik.errors.lastName}
-                            disabled
-                        />
-                        <FormControl variant="filled" fullWidth>
-                            <InputLabel>Gender</InputLabel>
-                            <Select
-                                value={formik.values.gender}
+                    </Stack>
+                    <Divider />
+                    <Scrollbar>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell padding="checkbox"><Checkbox /></TableCell>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Email</TableCell>
+                                    <TableCell>Role</TableCell>
+                                    <TableCell>Department</TableCell>
+                                    <TableCell>Joined</TableCell>
+                                    <TableCell>Terminate</TableCell>
+                                    <TableCell align="right">Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredEmployees
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((employee) => {
+                                        // Check if employee is scheduled to be hired
+                                        const isScheduledForHire = employee.hireDate &&
+                                            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
+
+                                        // Check if the termination date is in the future
+                                        const isTerminationFutureOrToday = employee.terminationDate &&
+                                            dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
+
+                                        return (
+                                            <TableRow key={employee._id}>
+                                                <TableCell padding="checkbox"><Checkbox /></TableCell>
+                                                <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                                                <TableCell>{employee.email}</TableCell>
+                                                <TableCell>{employee.jobTitle}</TableCell>
+                                                <TableCell>
+                                                    {departmentsData &&
+                                                        departmentsData.departments
+                                                            .filter(department => department._id === employee.department)
+                                                            .map(department => department.name)}
+                                                </TableCell>
+                                                <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
+                                                <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
+                                                <TableCell align="right">
+                                                    <Button
+                                                        variant="contained"
+                                                        color="primary"
+                                                        onClick={() => handleOpenDialog(employee)}
+                                                        disabled={rehiring || isScheduledForHire || isTerminationFutureOrToday}
+                                                    >
+                                                        {isScheduledForHire ? 'Hiring' : rehiring ? 'Rehiring' : 'Rehire'}
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                            </TableBody>
+                        </Table>
+                    </Scrollbar>
+                    <TablePagination
+                        component="div"
+                        count={filteredEmployees.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handlePageChange}
+                        onRowsPerPageChange={handleRowsPerPageChange}
+                        rowsPerPageOptions={[5, 10, 25]}
+                    />
+                </Card>
+
+                <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+                    <DialogContent>
+                        <Stack spacing={2}>
+                            <Typography variant="h5">Edit Rehire Employee Profile</Typography>
+                            <TextField
+                                fullWidth
+                                label="First Name"
+                                name="firstName"
+                                onBlur={formik.handleBlur}
                                 onChange={formik.handleChange}
-                                name="gender"
+                                value={formik.values.firstName}
+                                error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+                                helperText={formik.touched.firstName && formik.errors.firstName}
                                 disabled
-                            >
-                                <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
-                                <MenuItem value="Male">Male</MenuItem>
-                                <MenuItem value="Female">Female</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <TextField
-                            fullWidth
-                            label="Email"
-                            name="email"
-                            value={formik.values.email}
-                            disabled
-                        />
-                        <TextField
-                            fullWidth
-                            label="Personal Email"
-                            name="personalEmail"
-                            value={formik.values.personalEmail}
-                            disabled
-                        />
-                        <TextField
-                            fullWidth
-                            label="Job Title"
-                            name="jobTitle"
-                            onBlur={formik.handleBlur}
-                            onChange={formik.handleChange}
-                            value={formik.values.jobTitle}
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="Salary"
-                            name="salary"
-                            onBlur={formik.handleBlur}
-                            onChange={formik.handleChange}
-                            value={formik.values.salary}
-                            required
-                        />
-                        <FormControl fullWidth required>
-                            <InputLabel>Department</InputLabel>
-                            <Select
-                                value={formik.values.department}
+                            />
+                            <TextField
+                                fullWidth
+                                label="Last Name"
+                                name="lastName"
+                                onBlur={formik.handleBlur}
                                 onChange={formik.handleChange}
-                                name="department"
-                            >
-                                {departmentsData &&
-                                    departmentsData.departments.map((department) => (
+                                value={formik.values.lastName}
+                                error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+                                helperText={formik.touched.lastName && formik.errors.lastName}
+                                disabled
+                            />
+                            <FormControl variant="filled" fullWidth>
+                                <InputLabel>Gender</InputLabel>
+                                <Select
+                                    value={formik.values.gender}
+                                    onChange={formik.handleChange}
+                                    name="gender"
+                                    disabled
+                                >
+                                    <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                                    <MenuItem value="Male">Male</MenuItem>
+                                    <MenuItem value="Female">Female</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <TextField
+                                fullWidth
+                                label="Email"
+                                name="email"
+                                value={formik.values.email}
+                                disabled
+                            />
+                            <TextField
+                                fullWidth
+                                label="Personal Email"
+                                name="personalEmail"
+                                value={formik.values.personalEmail}
+                                disabled
+                            />
+                            <TextField
+                                fullWidth
+                                label="Job Title"
+                                name="jobTitle"
+                                onBlur={formik.handleBlur}
+                                onChange={formik.handleChange}
+                                value={formik.values.jobTitle}
+                                required
+                            />
+                            <TextField
+                                fullWidth
+                                label="Salary"
+                                name="salary"
+                                onBlur={formik.handleBlur}
+                                onChange={formik.handleChange}
+                                value={formik.values.salary}
+                                required
+                            />
+                            <FormControl fullWidth required>
+                                <InputLabel>Department</InputLabel>
+                                <Select
+                                    value={formik.values.department}
+                                    onChange={formik.handleChange}
+                                    name="department"
+                                >
+                                    {departmentsData?.departments.map((department) => (
                                         <MenuItem key={department._id} value={department._id}>
                                             {department.name}
                                         </MenuItem>
                                     ))}
-                            </Select>
-                        </FormControl>
-                        <Stack direction="row" spacing={2} justifyContent="space-between">
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    fullWidth
-                                    label="Hire Date *"
-                                    name="hireDate"
-                                    value={formik.values.hireDate ? dayjs(formik.values.hireDate) : null}
-                                    onChange={(newValue) => formik.setFieldValue('hireDate', newValue)}
-                                    disabled
-                                />
-                            </LocalizationProvider>
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    fullWidth
-                                    label="Termination Date"
-                                    name="terminationDate"
-                                    value={
-                                        formik.values.terminationDate ? dayjs(formik.values.terminationDate) : null
-                                    }
-                                    disabled
-                                />
-                            </LocalizationProvider>
+                                </Select>
+                            </FormControl>
+                            <Stack direction="row" spacing={2} justifyContent="right">
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        fullWidth
+                                        label="Hire Date *"
+                                        name="hireDate"
+                                        value={formik.values.hireDate ? dayjs(formik.values.hireDate) : null}
+                                        onChange={(newValue) => {
+                                            formik.setFieldValue('hireDate', newValue ? newValue.toISOString() : null); // Store ISO string in formik
+                                        }}
+                                        required
+                                    />
+                                </LocalizationProvider>
+                            </Stack>
                         </Stack>
-                    </Stack>
 
-                    <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
-                        <Button
-                            variant="outlined"
-                            onClick={() => {
-                                setOpen(false);
-                                formik.resetForm();
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                        fullWidth
-                        variant="contained"
-                        color="primary"
-                        onClick={handleRehire}
-                        disabled={rehiring}
-                    >
-                        {rehiring ? 'Rehiring' : 'Rehire'}
-                    </Button>
-                    </Stack>
-                </DialogContent>
-            </Dialog>
+                        <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => {
+                                    setOpen(false);
+                                    formik.resetForm();
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleRehire}
+                                disabled={rehiring}
+                            >
+                                {rehiring ? 'Rehiring' : 'Rehire'}
+                            </Button>
+                        </Stack>
+                    </DialogContent>
+                </Dialog>
+            </Stack>
         </>
     );
 }

@@ -1,6 +1,5 @@
 import { Grid, Typography } from '@mui/material';
 import RehireTable from './components/tableRehireEmployees';
-import FilterOptions from './components/filterOptions';
 
 function Rehire() {
     return (
@@ -17,9 +16,6 @@ function Rehire() {
                 </Grid>
                 <Grid item xs={12}>
                     <RehireTable />
-                </Grid>
-                <Grid item xs={12}>
-                    <FilterOptions />
                 </Grid>
             </Grid>
         </>
