@@ -57,21 +57,38 @@ function TableDocument({ selectedEmployee }) {
     }
 
     const handleUpload = () => {
-        if (selectedFile) {
-            // Mock uploading process and add the document to the list
-            const newDoc = {
-                id: documents.length + 1,
-                name: selectedFile.name,
-                type: getFileType(selectedFile.name),
-                date: new Date().toISOString().split('T')[0],  // current date
-                size: formatFileSize(selectedFile.size),
-            };
-            setDocuments(prevDocs => [...prevDocs, newDoc]);
-            setSelectedFile(null); // Clear the selected file
-            alert(`File "${selectedFile.name}" uploaded successfully.`);
-        } else {
+        if (!selectedFile) {
             alert('Please select a file first.');
+            return;
         }
+    
+        // File size validation (5MB limit)
+        const MAX_FILE_SIZE_MB = 5;
+        const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+        if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+            alert(`File size exceeds ${MAX_FILE_SIZE_MB}MB. Please upload a smaller file.`);
+            return;
+        }
+    
+        // File type validation
+        const validFileExtensions = ['pdf', 'doc', 'docx', 'txt', 'xlsx'];
+        const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
+        if (!validFileExtensions.includes(fileExtension)) {
+            alert(`Invalid file type. Please upload one of the following: ${validFileExtensions.join(', ')}`);
+            return;
+        }
+    
+        // If validation passes, process the upload
+        const newDoc = {
+            id: documents.length + 1,
+            name: selectedFile.name,
+            type: getFileType(selectedFile.name),
+            date: new Date().toISOString().split('T')[0], // current date
+            size: formatFileSize(selectedFile.size),
+        };
+        setDocuments(prevDocs => [...prevDocs, newDoc]);
+        setSelectedFile(null); // Clear the selected file
+        alert(`File "${selectedFile.name}" uploaded successfully.`);
     };
 
 

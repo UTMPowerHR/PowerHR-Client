@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';  
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Paper, Typography, Button, Box, Stack } from '@mui/material';
+import utc from 'dayjs/plugin/utc';
+import dayjs from 'dayjs';
+
+dayjs.extend(utc);
 
 function TransferDocument() {
     const user = useSelector((state) => state.auth.user);
@@ -62,11 +66,19 @@ function TransferDocument() {
     return (
 
         <Stack spacing={4}>
+            <Typography variant="h4">Transfer Digital Document</Typography>
+
             <Paper>
                 <Stack spacing={2} sx={{ p: 4 }}>
-                    <Typography variant="h4">Transfer Digital Document</Typography>
+                    <Typography variant="h5">Employee Details</Typography>
                     <Typography variant="body1">
-                        Welcome, {user?.firstName} {user?.lastName}
+                        <b>Name: </b> {user ? (user?.firstName + user?.lastName) : ""}
+                    </Typography>
+                    <Typography variant="body1">
+                        <b>Email: </b>  {user ? user?.email : ""}
+                    </Typography>
+                    <Typography variant="body1">
+                        <b>Termination Date: </b>  {user ? dayjs(user?.terminationDate).format("DD MMMM YYYY") : ""}
                     </Typography>
                 </Stack>     
             </Paper>
