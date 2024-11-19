@@ -174,7 +174,7 @@ function TableEmployees() {
             let terminationDate;
             switch (noticePeriod) {
                 case 'immediately':
-                    terminationDate = dayjs().format(); // Today's date
+                    terminationDate = dayjs().subtract(1, 'day').format(); // Today's date
                     break;
                 case '1_month':
                     terminationDate = dayjs().add(1, 'month').format();
