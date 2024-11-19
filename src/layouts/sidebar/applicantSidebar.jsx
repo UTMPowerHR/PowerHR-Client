@@ -30,12 +30,12 @@ const applicantSection = [
                         title: 'Example',
                         path: PATHS.JOB.EXAMPLE,
                     },
-                    {
-                        title: 'Transfer Document',
-                        path: PATHS.JOB.TRANSFER_DOCUMENT,
-                    },  
                 ],
             },
+            {
+                title: 'Transfer Document',
+                path: PATHS.JOB.TRANSFER_DOCUMENT,
+            },  
         ],
     },
 ];
