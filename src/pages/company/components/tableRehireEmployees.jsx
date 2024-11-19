@@ -199,6 +199,25 @@ function TableRehireEmployees() {
     const handlePageChange = (event, newPage) => setPage(newPage);
     const handleRowsPerPageChange = (event) => setRowsPerPage(parseInt(event.target.value, 10));
 
+    const [experienceRanking, setExperienceRanking] = useState([]);
+
+    useEffect(() => {
+        const calculateExperienceRanking = () => {
+            const rankedEmployees = filteredEmployees
+                .filter(employee => employee.terminationDate) // Only terminated employees
+                .map(employee => ({
+                    ...employee,
+                    workExperience: dayjs(employee.terminationDate).diff(dayjs(employee.hireDate), 'day')
+                }))
+                .sort((a, b) => b.workExperience - a.workExperience)
+                .slice(0, 10); // Top 10 employees by experience
+    
+            setExperienceRanking(rankedEmployees);
+        };
+    
+        calculateExperienceRanking();
+    }, [filteredEmployees]); // Use filteredEmployees instead of employees
+
     return (
         <>
             <Stack direction="row" spacing={2} p={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
@@ -327,6 +346,32 @@ function TableRehireEmployees() {
                         rowsPerPageOptions={[5, 10, 25]}
                     />
                 </Card>
+                <Card sx={{ flex: 1, minWidth: '30%', height: '100%' }}>
+    <Stack direction="column" spacing={2} p={2}>
+        <Typography variant="h6">Top 10 Employees by Experience</Typography>
+        <Table size="small">
+            <TableHead>
+                <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Department</TableCell>
+                    <TableCell align="right">Days Worked</TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {experienceRanking.map((employee) => (
+                    <TableRow key={employee._id}>
+                        <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                        <TableCell>
+                            {departmentsData?.departments
+                                .find(dept => dept._id === employee.department)?.name || 'N/A'}
+                        </TableCell>
+                        <TableCell align="right">{employee.workExperience}</TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    </Stack>
+</Card>
 
                 <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
                     <DialogContent>

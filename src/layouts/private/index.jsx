@@ -11,7 +11,7 @@ dayjs.extend(isSameOrAfter);
 //Checks whether the employee is terminated
 //If the employee is in termination process, it will display the transfer document side bar.
 const filterEmployeeSection = (sections, user) => {
-    if (user.terminationDate && dayjs(user.terminationDate).isBefore(dayjs())) {
+    if (user.terminationDate && dayjs(user.terminationDate).isSameOrAfter(dayjs())) {
         return sections.map((section) => {
             // Check and remove the "Transfer Document" menu
             const updatedItems = section.items.filter(
@@ -41,7 +41,7 @@ export const PrivateLayout = (props) => {
     const { user } = useSelector((state) => state.auth);
     const sections = useMemo(() => {
         const baseSections = getSections(user.role);
-        if (user.role === 'Employee') {
+        if (user.role === 'Applicant') {
             return filterEmployeeSection(baseSections, user);
         }
         return baseSections;
