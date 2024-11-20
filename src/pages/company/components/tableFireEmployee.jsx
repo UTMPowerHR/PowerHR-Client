@@ -337,11 +337,11 @@ function TableEmployees() {
                         <Typography variant="h5">Employees</Typography>
                         <Typography
                             variant="h6"
-                            color={requiredTerminations > 0 ? 'error' : 'success'}
+                            color={requiredTerminations > 0 ? 'error' : '#31d436'}
                         >
                             {requiredTerminations > 0
-                                ? `Required Terminations Remaining: ${requiredTerminations}`
-                                : 'Termination Is Not Necessary! For Now...'
+                                ? `Termination Required : ${requiredTerminations}`
+                                : 'No Termination Needed!'
                             }
                         </Typography>
                         <OutlinedInput
