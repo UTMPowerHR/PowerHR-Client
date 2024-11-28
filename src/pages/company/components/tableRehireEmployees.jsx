@@ -79,7 +79,6 @@ function TableRehireEmployees() {
         if (selectedEmployee) {
             setOpen(false);
             setRehiring(true);
-            setIsRehireLoading(true);
 
             try {
                 await updateEmployee({
