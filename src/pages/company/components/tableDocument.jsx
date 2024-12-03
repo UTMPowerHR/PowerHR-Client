@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Paper, Typography, Button, Box, Stack } from '@mui/material';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Paper,
+    Typography,
+    Button,
+    Box,
+    Stack,
+    IconButton
+} from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 
@@ -16,7 +31,6 @@ function TableDocument({ selectedEmployee }) {
     const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
-        // Filter documents based on search query
         const results = documents.filter(doc =>
             doc.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
@@ -27,7 +41,6 @@ function TableDocument({ selectedEmployee }) {
         setSelectedFile(event.target.files[0]);
     };
 
-    // Helper function to determine document type based on file extension
     const getFileType = (fileName) => {
         const extension = fileName.split('.').pop().toLowerCase();
         switch (extension) {
@@ -45,14 +58,14 @@ function TableDocument({ selectedEmployee }) {
 
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
-        
+
         const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const k = 1000; // Changed to 1000 instead of 1024
-        const dm = 2;   // Decimal places
-        
+        const k = 1000;
+        const dm = 2;
+
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        const size = Math.round(parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) * 100) / 100; //Round the file size by 2 decimal points    
-        
+        const size = Math.round(parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) * 100) / 100;
+
         return `${size} ${units[i]}`;
     }
 
@@ -61,39 +74,42 @@ function TableDocument({ selectedEmployee }) {
             alert('Please select a file first.');
             return;
         }
-    
-        // File size validation (5MB limit)
+
         const MAX_FILE_SIZE_MB = 5;
         const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
         if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
             alert(`File size exceeds ${MAX_FILE_SIZE_MB}MB. Please upload a smaller file.`);
             return;
         }
-    
-        // File type validation
+
         const validFileExtensions = ['pdf', 'doc', 'docx', 'txt', 'xlsx'];
         const fileExtension = selectedFile.name.split('.').pop().toLowerCase();
         if (!validFileExtensions.includes(fileExtension)) {
             alert(`Invalid file type. Please upload one of the following: ${validFileExtensions.join(', ')}`);
             return;
         }
-    
-        // If validation passes, process the upload
+
         const newDoc = {
             id: documents.length + 1,
             name: selectedFile.name,
             type: getFileType(selectedFile.name),
-            date: new Date().toISOString().split('T')[0], // current date
+            date: new Date().toISOString().split('T')[0],
             size: formatFileSize(selectedFile.size),
         };
         setDocuments(prevDocs => [...prevDocs, newDoc]);
-        setSelectedFile(null); // Clear the selected file
+        setSelectedFile(null);
         alert(`File "${selectedFile.name}" uploaded successfully.`);
     };
 
+    const handleDelete = (id) => {
+
+        if(confirm("Are you sure do you want to delete the file from the list?") == true){
+            const updatedDocuments = documents.filter(doc => doc.id !== id);
+            setDocuments(updatedDocuments);
+        }
+    };
 
     return (
-
         <Stack spacing={4}>
             <Typography variant="h4">Transfer Digital Document</Typography>
 
@@ -104,12 +120,12 @@ function TableDocument({ selectedEmployee }) {
                         <b>Name: </b> {selectedEmployee ? selectedEmployee?.name : ""}
                     </Typography>
                     <Typography variant="body1">
-                        <b>Email: </b>  {selectedEmployee ? selectedEmployee?.email : ""}
+                        <b>Email: </b> {selectedEmployee ? selectedEmployee?.email : ""}
                     </Typography>
                     <Typography variant="body1">
-                        <b>Termination Date: </b>  {selectedEmployee ? dayjs(selectedEmployee?.terminationDate).format("DD MMMM YYYY") : ""}
+                        <b>Termination Date: </b> {selectedEmployee ? dayjs(selectedEmployee?.terminationDate).format("DD MMMM YYYY") : ""}
                     </Typography>
-                </Stack>     
+                </Stack>
             </Paper>
 
             <Paper
@@ -121,16 +137,15 @@ function TableDocument({ selectedEmployee }) {
                     color: '#e0e0e0',
                     margin: 'auto',
                     textAlign: 'center',
-                    maxWidth: '100%', // Adjusted for wider width
-                    paddingLeft: '30px', // Add more padding to the left
-                    paddingRight: '30px', // Add more padding to the right
+                    maxWidth: '100%',
+                    paddingLeft: '30px',
+                    paddingRight: '30px',
                 }}
             >
                 <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#e0e0e0' }}>
                     Uploaded Documents
                 </Typography>
 
-                {/* Search Bar */}
                 <TextField
                     label="Search Documents"
                     variant="filled"
@@ -140,15 +155,12 @@ function TableDocument({ selectedEmployee }) {
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
 
-                {/* Upload Button and Input */}
                 <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
                     <input
                         type="file"
                         accept=".pdf,.doc,.docx,.txt"
                         onChange={handleFileChange}
-                        style={{
-                            display: 'none',
-                        }}
+                        style={{ display: 'none' }}
                         id="file-upload-input"
                     />
                     <label htmlFor="file-upload-input">
@@ -157,11 +169,9 @@ function TableDocument({ selectedEmployee }) {
                             component="span"
                             sx={{
                                 backgroundColor: '#1f4068',
-                                '&:hover': {
-                                    backgroundColor: '#1b3b5f'
-                                },
+                                '&:hover': { backgroundColor: '#1b3b5f' },
                                 color: '#fff',
-                                textTransform: 'none'
+                                textTransform: 'none',
                             }}
                         >
                             Choose File
@@ -175,19 +185,16 @@ function TableDocument({ selectedEmployee }) {
                         onClick={handleUpload}
                         sx={{
                             backgroundColor: '#1f4068',
-                            '&:hover': {
-                                backgroundColor: '#1b3b5f'
-                            },
+                            '&:hover': { backgroundColor: '#1b3b5f' },
                             color: '#fff',
                             textTransform: 'none',
-                            ml: 2
+                            ml: 2,
                         }}
                     >
                         Upload Document
                     </Button>
                 </Box>
 
-                {/* Table of Documents */}
                 <TableContainer sx={{ backgroundColor: '#1a1a2e' }}>
                     <Table>
                         <TableHead>
@@ -196,6 +203,7 @@ function TableDocument({ selectedEmployee }) {
                                 <TableCell sx={{ color: '#e0e0e0' }}>Document Type</TableCell>
                                 <TableCell sx={{ color: '#e0e0e0' }}>Size</TableCell>
                                 <TableCell sx={{ color: '#e0e0e0' }}>Upload Date</TableCell>
+                                <TableCell sx={{ color: '#e0e0e0' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -205,13 +213,21 @@ function TableDocument({ selectedEmployee }) {
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.type}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.size}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0' }}>{doc.date}</TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            onClick={() => handleDelete(doc.id)}
+                                            sx={{ color: 'red' }}
+                                        >
+                                            <Delete />
+                                        </IconButton>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
             </Paper>
-        </Stack>        
+        </Stack>
     );
 }
 

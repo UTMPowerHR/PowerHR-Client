@@ -39,7 +39,6 @@ import {
 } from '@features/company/companyApiSlice';
 import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
-import emailjs from 'emailjs-com';
 import determineRole from './roleHierarchy';
 import { useNavigate } from 'react-router-dom';
 
@@ -104,62 +103,6 @@ function TableEmployees() {
         setConfirmationOpen(true);
     };
 
-    // Function to convert file to Base64
-    const fileToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-        });
-    };
-
-    // Function to send termination email with EmailJS
-    const sendTerminationEmail = async (employee) => {
-        if (!terminationLetter) {
-            console.error('Termination letter is required to send an email.');
-            return;
-        }
-
-        try {
-            // Convert the file to Base64
-            const base64File = await fileToBase64(terminationLetter);
-
-            // Prepare the attachment object
-            const attachment = {
-                filename: terminationLetter.name,
-                content: base64File.split(',')[1], // Remove the "data:*/*;base64," prefix
-            };
-
-            // Prepare email parameters
-            const emailParams = {
-                to_name: `${employee.firstName} ${employee.lastName}`,
-                to_email: employee.email,
-                subject: 'Termination Notice',
-                termination_date: dayjs().add(1, 'month').format('DD MMM YYYY'),
-                company: user.company,
-                message: 'Please find the attached termination letter.',
-                attachments: [attachment], // Send as an array of attachments
-            };
-
-            // Send the email using EmailJS
-            await emailjs.send(
-                'service_24y4znc',
-                'template_t8hscf8',
-                emailParams,
-                'RXtJM-VrBVUEqhT-y'
-            );
-
-            console.log('Termination email sent successfully');
-        } catch (error) {
-            console.error('Failed to send termination email:', error);
-        }
-    };
-
-
-
-
-
     // Modified confirm termination function
     const confirmTerminateEmployee = async () => {
         setConfirmationOpen(false);
@@ -174,7 +117,7 @@ function TableEmployees() {
             let terminationDate;
             switch (noticePeriod) {
                 case 'immediately':
-                    terminationDate = dayjs().subtract(1, 'day').format(); // Today's date
+                    terminationDate = dayjs().format(); // Today's date
                     break;
                 case '1_month':
                     terminationDate = dayjs().add(1, 'month').format();
@@ -198,9 +141,6 @@ function TableEmployees() {
             formData.append('employeeId', selectedEmployee._id);
 
             await updateEmployee(updatedEmployee); // Update employee in the database
-
-            // Send termination email
-            await sendTerminationEmail(selectedEmployee);
 
             // Update local state after successful termination
             dispatch(setEmployees(

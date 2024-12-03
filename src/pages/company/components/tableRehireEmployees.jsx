@@ -79,7 +79,7 @@ function TableRehireEmployees() {
         if (selectedEmployee) {
             setOpen(false);
             setRehiring(true);
-    
+
             try {
                 await updateEmployee({
                     ...selectedEmployee,
