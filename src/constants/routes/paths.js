@@ -27,6 +27,7 @@ const PATHS = {
         INDEX: '/user',
         PROFILE: '/user/profile',
         SETTING: '/user/setting',
+        INBOX: '/user/inbox',
     },
     EMPLOYEE: {
         INDEX: '/employee',
