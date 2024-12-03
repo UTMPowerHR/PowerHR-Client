@@ -39,6 +39,7 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.USER.PROFILE} element={<User.Account tabValue="profile" />} />
                 <Route path={PATHS.USER.SETTING} element={<User.Account tabValue="setting" />} />
+                <Route path={PATHS.USER.INBOX} element={<User.Inbox />} />
             </Route>
 
             <Route>
