@@ -89,14 +89,14 @@ function TableRehireEmployees() {
                     hireDate: formik.values.hireDate,
                     terminationDate: null,
                 }).unwrap();
-
+    
                 dispatch(setEmployees(data.employees));
                 formik.resetForm();
             } catch (error) {
                 console.error("Failed to rehire employee:", error);
             } finally {
                 setRehiring(false);
-                setIsRehireLoading(false);
+                setSelectedEmployee(null);
             }
         }
     };
@@ -210,10 +210,10 @@ function TableRehireEmployees() {
                 }))
                 .sort((a, b) => b.workExperience - a.workExperience)
                 .slice(0, 10); // Top 10 employees by experience
-    
+
             setExperienceRanking(rankedEmployees);
         };
-    
+
         calculateExperienceRanking();
     }, [filteredEmployees]); // Use filteredEmployees instead of employees
 
@@ -294,44 +294,52 @@ function TableRehireEmployees() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredEmployees
-                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                    .map((employee) => {
-                                        // Check if employee is scheduled to be hired
-                                        const isScheduledForHire = employee.hireDate &&
-                                            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
+                            {filteredEmployees
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    .map((employee) => {
+        // Check if employee is scheduled to be hired
+        const isScheduledForHire = employee.hireDate &&
+            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
 
-                                        // Check if the termination date is in the future
-                                        const isTerminationFutureOrToday = employee.terminationDate &&
-                                            dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
+        // Check if the termination date is in the future
+        const isTerminationFutureOrToday = employee.terminationDate &&
+            dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
 
-                                        return (
-                                            <TableRow key={employee._id}>
-                                                <TableCell padding="checkbox"><Checkbox /></TableCell>
-                                                <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                                                <TableCell>{employee.email}</TableCell>
-                                                <TableCell>{employee.jobTitle}</TableCell>
-                                                <TableCell>
-                                                    {departmentsData &&
-                                                        departmentsData.departments
-                                                            .filter(department => department._id === employee.department)
-                                                            .map(department => department.name)}
-                                                </TableCell>
-                                                <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
-                                                <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
-                                                <TableCell align="right">
-                                                    <Button
-                                                        variant="contained"
-                                                        color="primary"
-                                                        onClick={() => handleOpenDialog(employee)}
-                                                        disabled={rehiring || isScheduledForHire || isTerminationFutureOrToday}
-                                                    >
-                                                        {isScheduledForHire ? 'Hiring' : rehiring ? 'Rehiring' : 'Rehire'}
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
+        return (
+            <TableRow key={employee._id}>
+                <TableCell padding="checkbox"><Checkbox /></TableCell>
+                <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                <TableCell>{employee.email}</TableCell>
+                <TableCell>{employee.jobTitle}</TableCell>
+                <TableCell>
+                    {departmentsData &&
+                        departmentsData.departments
+                            .filter(department => department._id === employee.department)
+                            .map(department => department.name)}
+                </TableCell>
+                <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
+                <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
+                <TableCell align="right">
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleOpenDialog(employee)}
+                        disabled={
+                            selectedEmployee && selectedEmployee._id === employee._id && rehiring || 
+                            isScheduledForHire || 
+                            isTerminationFutureOrToday
+                        }
+                    >
+                        {selectedEmployee && selectedEmployee._id === employee._id && rehiring 
+                            ? 'Rehiring' 
+                            : isScheduledForHire 
+                            ? 'Hiring' 
+                            : 'Rehire'}
+                    </Button>
+                </TableCell>
+            </TableRow>
+        );
+    })}
                             </TableBody>
                         </Table>
                     </Scrollbar>
@@ -345,32 +353,32 @@ function TableRehireEmployees() {
                         rowsPerPageOptions={[5, 10, 25]}
                     />
                 </Card>
-                <Card sx={{ flex: 1, minWidth: '30%', height: '100%' }}>
-    <Stack direction="column" spacing={2} p={2}>
-        <Typography variant="h6">Top 10 Employees by Experience</Typography>
-        <Table size="small">
-            <TableHead>
-                <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Department</TableCell>
-                    <TableCell align="right">Days Worked</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {experienceRanking.map((employee) => (
-                    <TableRow key={employee._id}>
-                        <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                        <TableCell>
-                            {departmentsData?.departments
-                                .find(dept => dept._id === employee.department)?.name || 'N/A'}
-                        </TableCell>
-                        <TableCell align="right">{employee.workExperience}</TableCell>
-                    </TableRow>
-                ))}
-            </TableBody>
-        </Table>
-    </Stack>
-</Card>
+                {/* <Card sx={{ flex: 1, minWidth: '30%', height: '100%' }}>
+                    <Stack direction="column" spacing={2} p={2}>
+                        <Typography variant="h6">Top 10 Employees by Experience</Typography>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Department</TableCell>
+                                    <TableCell align="right">Days Worked</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {experienceRanking.map((employee) => (
+                                    <TableRow key={employee._id}>
+                                        <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                                        <TableCell>
+                                            {departmentsData?.departments
+                                                .find(dept => dept._id === employee.department)?.name || 'N/A'}
+                                        </TableCell>
+                                        <TableCell align="right">{employee.workExperience}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Stack>
+                </Card> */}
 
                 <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
                     <DialogContent>
