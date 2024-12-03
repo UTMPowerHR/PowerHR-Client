@@ -18,7 +18,7 @@ function Rehire() {
                 <RehireTable />
             </Grid>
             <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Employee Experience Rankings</Typography>
+                <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Run TOPSIS Analysis</Typography>
                 <RankedEmployeesTable />
             </Grid>
         </Grid>
