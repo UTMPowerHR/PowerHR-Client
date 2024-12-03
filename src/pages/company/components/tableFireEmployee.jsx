@@ -45,7 +45,7 @@ import { useNavigate } from 'react-router-dom';
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
 
-function TableEmployees() {
+function TableTerminateEmployees() {
     const user = useSelector((state) => state.auth.user);
     // const employees = useSelector((state) => state.company.employees);
     const [open, setOpen] = useState(false);
@@ -461,4 +461,4 @@ function TableEmployees() {
     );
 }
 
-export default TableEmployees;
+export default TableTerminateEmployees;
