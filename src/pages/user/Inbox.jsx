@@ -14,19 +14,28 @@ import {
     Typography,
     Stack,
     Box,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
 } from '@mui/material';
-import InboxIcon from '@mui/icons-material/Inbox'; // Icon for empty state
-import { inboxDocuments as documents } from './inboxData';
+import InboxIcon from '@mui/icons-material/Inbox';
+import NotesIcon from '@mui/icons-material/Notes';
+import { inboxData as inboxDocuments } from './inboxData';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
 
 const Inbox = () => {
     const user = useSelector((state) => state.auth.user);
-    const [filteredDocs, setFilteredDocs] = useState(documents);
+    const [documents, setDocuments] = useState(inboxDocuments);
     const [searchQuery, setSearchQuery] = useState('');
+    const [filteredDocs, setFilteredDocs] = useState(documents);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [departmentOptions, setDepartmentOptions] = useState([]);
+    const [handoverNotes, setHandoverNotes] = useState('');
+    const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
 
     // Fetch department data
     useEffect(() => {
@@ -47,10 +56,16 @@ const Inbox = () => {
             documents.filter(
                 (doc) =>
                     doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    doc.sender.toLowerCase().includes(searchQuery.toLowerCase())
+                    doc.uploader.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     }, [searchQuery, documents]);
+
+    // Filter document by department
+    useEffect(() => {
+        const results = documents.filter((doc) => doc.department === getDepartmentName());
+        setFilteredDocs(results);
+    }, [documents, departmentOptions, user.department]);
 
     // Pagination handlers
     const handleChangePage = (event, newPage) => {
@@ -60,6 +75,13 @@ const Inbox = () => {
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
+    };
+
+    //Display Handover Notes
+    const handleDisplayHandoverNotes = (doc) => {
+        setDisplayHandoverModalOpen(true);
+        const selectedDoc = filteredDocs.find((docs) => (docs.id === doc));
+        setHandoverNotes(selectedDoc.notes);
     };
 
     return (
@@ -102,14 +124,14 @@ const Inbox = () => {
                                 <TableCell>Document Name</TableCell>
                                 <TableCell>Type</TableCell>
                                 <TableCell>Size</TableCell>
-                                <TableCell>Sender</TableCell>
-                                <TableCell>Transfer Date</TableCell>
+                                <TableCell>Uploader</TableCell>
+                                <TableCell>Upload Date</TableCell>
+                                <TableCell sx={{ textAlign: 'center' }}>Notes</TableCell>
                                 <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {filteredDocs
-                                .filter((doc) => doc.department === getDepartmentName())
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).length > 0 ? (
                                 filteredDocs
                                     .filter((doc) => doc.department === getDepartmentName())
@@ -120,8 +142,13 @@ const Inbox = () => {
                                             <TableCell>{doc.name}</TableCell>
                                             <TableCell>{doc.type}</TableCell>
                                             <TableCell>{doc.size}</TableCell>
-                                            <TableCell>{doc.sender}</TableCell>
-                                            <TableCell>{doc.transferDate}</TableCell>
+                                            <TableCell>{doc.uploader}</TableCell>
+                                            <TableCell>{doc.date}</TableCell>
+                                            <TableCell sx={{ textAlign: 'center' }}>
+                                                <IconButton onClick={() => handleDisplayHandoverNotes(doc.id)}>
+                                                    <NotesIcon sx={{ color: '#e0e0e0' }} />
+                                                </IconButton>
+                                            </TableCell>
                                             <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
                                                 <Button
                                                     variant="contained"
@@ -168,6 +195,36 @@ const Inbox = () => {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </Paper>
+
+            {/* Display Handover Notes Dialog */}
+            <Dialog open={displayHandoverModalOpen} onClose={() => {
+                setDisplayHandoverModalOpen(false);
+                setHandoverNotes('');
+            }}>
+                <DialogTitle>Display Handover Notes</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Note Description"
+                        type="text"
+                        fullWidth
+                        value={handoverNotes}
+                        multiline
+                        rows={4}
+                        variant="filled"
+                        disabled
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {
+                        setDisplayHandoverModalOpen(false);
+                        setHandoverNotes('');
+                    }} color="primary">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Stack>
     );
 };
