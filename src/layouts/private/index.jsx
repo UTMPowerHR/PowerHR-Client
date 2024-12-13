@@ -11,41 +11,47 @@ dayjs.extend(utc);
 //Checks whether the employee is terminated
 //If the employee is in termination process, it will display the transfer document side bar.
 const filterEmployeeSection = (sections, user) => {
-    if (user.terminationDate && dayjs(user.terminationDate).isBefore(dayjs())) {
-        return sections.map((section) => {
-            // Check and remove the "Transfer Document" menu
-            const updatedItems = section.items.filter(
-                (item) => item.title !== 'Transfer Document'
-            );
-            return { ...section, items: updatedItems };
-        });
+    if (!user.terminationDate || dayjs(user.terminationDate).isBefore(dayjs())) {
+        const filterItems = (items) => {
+            return items
+                .filter((item) => item.title !== 'Transfer Document')
+                .map((item) => {
+                    if (item.items) {
+                        // Recursively filter nested items
+                        return { ...item, items: filterItems(item.items) };
+                    }
+                    return item;
+                });
+            };
+
+        return sections.map((section) => ({
+            ...section,
+            items: filterItems(section.items),
+        }));
     }
     return sections;
 };
 
-const getSections = (role) => {
-    if (role === 'Applicant') {
+const getSections = (user) => {
+    if (user.role === 'Applicant') {
         return applicantSection;
-    } else if (role === 'Admin') {
+    } else if (user.role === 'Admin') {
         return adminSection;
-    } else if (role === 'SysAdmin') {
+    } else if (user.role === 'SysAdmin') {
         return systemAdminSection;
-    } else if (role === 'HR') {
+    } else if (user.role === 'HR') {
         return hrSection;
     } else {
-        return employeeSection;
+        return filterEmployeeSection(employeeSection, user);
     }
 };
 
 export const PrivateLayout = (props) => {
     const { user } = useSelector((state) => state.auth);
     const sections = useMemo(() => {
-        const baseSections = getSections(user.role);
-        if (user.role === 'Employee') {
-            return filterEmployeeSection(baseSections, user);
-        }
+        const baseSections = getSections(user);
         return baseSections;
-    }, [user]);    
+    }, [user]);
     return <Layout sections={sections} navColor="evident" {...props} />;
 };
 

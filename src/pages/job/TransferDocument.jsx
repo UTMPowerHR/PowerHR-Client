@@ -22,7 +22,7 @@ import {
     Select,
     MenuItem,
 } from '@mui/material';
-import SendIcon from '@mui/icons-material/Send';
+import NotesIcon from '@mui/icons-material/Notes';
 import { Delete, Edit, Save } from '@mui/icons-material';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
@@ -47,6 +47,7 @@ function TableDocument() {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [handoverNotes, setHandoverNotes] = useState('');
     const [handoverModalOpen, setHandoverModalOpen] = useState(false);
+    const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
 
     useEffect(() => {
         if (departmentsData) {
@@ -54,8 +55,19 @@ function TableDocument() {
         }
     }, [departmentsData]);
 
+    const getUserFullName = () => {
+        return user.firstName + " " + user.lastName;
+    };
+
     useEffect(() => {
-        const results = documents.filter(doc =>
+        const results = documents.filter((doc) =>
+            doc.uploader == getUserFullName()
+        );
+        setDocuments(results);
+    }, [documents]);
+
+    useEffect(() => {
+        const results = documents.filter((doc) =>
             doc.name.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setFilteredDocs(results);
@@ -93,6 +105,11 @@ function TableDocument() {
         return `${size} ${units[i]}`;
     };
 
+    const getDepartmentName = () => {
+        const department = departmentOptions.find((dept) => dept._id === user.department);
+        return department ? department.name : 'Unknown Department';
+    };
+
     const handleUpload = () => {
         if (!selectedFile) {
             alert('Please select a file first.');
@@ -128,16 +145,25 @@ function TableDocument() {
         setEditedName(currentName);
     };
 
-    const getBaseName = () => {
-        const extensionStartIndex = (editedName.indexOf('.') > 0) ? editedName.indexOf('.') : editedName.length;
-        const baseName = editedName.substring(0, extensionStartIndex);
+    const getFileNameById = (id) => {
+        const file = documents.find(file => file.id === id);
+        return file ? file.name : null;
+    };
+
+    const getBaseName = (name) => {
+        const extensionStartIndex = (name.indexOf('.') > 0) ? name.indexOf('.') : name.length;
+        const baseName = name.substring(0, extensionStartIndex);
         return baseName;
-    }
+    };
 
     const isNameContainSpecialChar = (name) => {
         var format = /[ `!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/; //regEx for special characters
         return format.test(name);
-    }
+    };
+
+    const isNameExists = (name) => {
+        return documents.some(file => (getBaseName(file.name) === name));
+    };
 
     //Sanitize the filename and extension to prevent multiple extension added to the filename
     const handleSave = (id) => {
@@ -146,12 +172,16 @@ function TableDocument() {
             alert("Invalid Filename. Please enter a filename.");
             return;
         }
-        else if (isNameContainSpecialChar(getBaseName())) {
+        else if (isNameContainSpecialChar(getBaseName(editedName))) {
             alert("Invalid Filename. Please enter a valid filename without any special characters.");
             return;
         }
-        else if (editedName.length > 20) {
-            alert("Invalid Filename. Filename must not exceed 20 characters.");
+        else if (editedName.length > 30) {
+            alert("Invalid Filename. Filename must not exceed 30 characters.");
+            return;
+        }
+        else if (isNameExists(editedName) && (editedName != getFileNameById(id))) {
+            alert("Duplicate Filename. The Filename already existed.");
             return;
         }
 
@@ -161,7 +191,7 @@ function TableDocument() {
                     // Extract the original extension from the document name
                     const originalExtension = doc.name.substring(doc.name.lastIndexOf('.'));
 
-                    const baseName = getBaseName();
+                    const baseName = getBaseName(editedName);
 
                     // Combine the base name with the original extension
                     const sanitizedName = baseName + originalExtension;
@@ -175,22 +205,6 @@ function TableDocument() {
         setEditingId(null);
         setEditedName('');
     };
-
-    //Transfer File to another department
-    const handleTransferClick = (doc) => {
-        setSelectedFile(doc);
-        setTransferOpen(true);
-    };
-
-    const confirmTransfer = () => {
-        if (selectedFile && selectedDepartment) {
-            //handleTransfer(selectedFile, selectedDepartment); // Trigger the transfer logic
-            setTransferOpen(false);
-            setSelectedFile(null);
-            setSelectedDepartment('');
-        }
-    };
-    //
 
     //Table Pagination
     const handleChangePage = (event, newPage) => {
@@ -208,8 +222,10 @@ function TableDocument() {
             id: documents.length + 1,
             name: selectedFile.name,
             type: getFileType(selectedFile.name),
-            date: new Date().toISOString().split('T')[0],
             size: formatFileSize(selectedFile.size),
+            uploader: getUserFullName(),
+            date: new Date().toISOString().split('T')[0],
+            department: getDepartmentName(),
             handoverNotes: handoverNotes || 'No notes provided',
         };
 
@@ -220,19 +236,29 @@ function TableDocument() {
         alert(`File "${selectedFile.name}" uploaded successfully with notes.`);
     };
 
+    //Display Handover Notes
+    const handleDisplayHandoverNotes = (doc) => {
+        setDisplayHandoverModalOpen(true);
+        const selectedDoc = documents.find((docs) => (docs.id === doc));
+        setHandoverNotes(selectedDoc.notes);
+    };
+
 
     return (
         <Stack spacing={4}>
             <Typography variant="h4">Transfer Digital Document</Typography>
 
             <Paper>
-            <Stack spacing={2} sx={{ p: 4 }}>
+                <Stack spacing={2} sx={{ p: 4 }}>
                     <Typography variant="h5">Employee Details</Typography>
                     <Typography variant="body1">
-                        <b>Name: </b> {user.firstName + " " + user.lastName}
+                        <b>Name: </b> {getUserFullName()}
                     </Typography>
                     <Typography variant="body1">
                         <b>Email: </b> {user.email}
+                    </Typography>
+                    <Typography variant="body1">
+                        <b>Department: </b> {getDepartmentName()}
                     </Typography>
                     <Typography variant="body1">
                         <b>Termination Date: </b> {user ? dayjs(user?.terminationDate).format("DD MMMM YYYY") : ""}
@@ -243,7 +269,6 @@ function TableDocument() {
             <Paper
                 elevation={3}
                 sx={{
-                    backgroundColor: '#1a1a2e',
                     padding: '30px',
                     borderRadius: '8px',
                     color: '#e0e0e0',
@@ -307,7 +332,7 @@ function TableDocument() {
                     </Button>
                 </Box>
 
-                <TableContainer sx={{ backgroundColor: '#1a1a2e' }}>
+                <TableContainer>
                     <Table>
                         <TableHead>
                             <TableRow>
@@ -320,44 +345,46 @@ function TableDocument() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredDocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((doc, index) => (
-                                <TableRow key={doc.id}>
-                                    <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{index + 1 + page * rowsPerPage}.</TableCell>
-                                    <TableCell>
-                                        {editingId === doc.id ? (
-                                            <TextField
-                                                value={getBaseName()}
-                                                onChange={(e) => setEditedName(e.target.value)}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ input: { color: '#e0e0e0' } }}
-                                            />
-                                        ) : (
-                                            doc.name
-                                        )}
-                                    </TableCell>
-                                    <TableCell>{doc.type}</TableCell>
-                                    <TableCell>{doc.size}</TableCell>
-                                    <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{doc.date}</TableCell>
-                                    <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
-                                        <IconButton onClick={() => handleTransferClick(doc.id)}>
-                                            <SendIcon sx={{ color: '#e0e0e0' }} />
-                                        </IconButton>
-                                        {editingId === doc.id ? (
-                                            <IconButton onClick={() => handleSave(doc.id)}>
-                                                <Save sx={{ color: '#e0e0e0' }} />
+                            {filteredDocs
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((doc, index) => (
+                                    <TableRow key={doc.id}>
+                                        <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{index + 1 + page * rowsPerPage}.</TableCell>
+                                        <TableCell>
+                                            {editingId === doc.id ? (
+                                                <TextField
+                                                    value={getBaseName(editedName)}
+                                                    onChange={(e) => setEditedName(e.target.value)}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    sx={{ input: { color: '#e0e0e0' } }}
+                                                />
+                                            ) : (
+                                                doc.name
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{doc.type}</TableCell>
+                                        <TableCell>{doc.size}</TableCell>
+                                        <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{doc.date}</TableCell>
+                                        <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
+                                            <IconButton onClick={() => handleDisplayHandoverNotes(doc.id)}>
+                                                <NotesIcon sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
-                                        ) : (
-                                            <IconButton onClick={() => handleEdit(doc.id, doc.name)}>
-                                                <Edit sx={{ color: '#e0e0e0' }} />
+                                            {editingId === doc.id ? (
+                                                <IconButton onClick={() => handleSave(doc.id)}>
+                                                    <Save sx={{ color: '#e0e0e0' }} />
+                                                </IconButton>
+                                            ) : (
+                                                <IconButton onClick={() => handleEdit(doc.id, doc.name)}>
+                                                    <Edit sx={{ color: '#e0e0e0' }} />
+                                                </IconButton>
+                                            )}
+                                            <IconButton onClick={() => handleDelete(doc.id)}>
+                                                <Delete sx={{ color: '#FF0000' }} />
                                             </IconButton>
-                                        )}
-                                        <IconButton onClick={() => handleDelete(doc.id)}>
-                                            <Delete sx={{ color: '#FF0000' }} />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -372,41 +399,6 @@ function TableDocument() {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
             </Paper>
-
-            <Dialog open={transferOpen} onClose={() => setTransferOpen(false)}>
-                <DialogTitle>Transfer Document</DialogTitle>
-                <DialogContent>
-                    <Typography>Select the department to transfer this document:</Typography>
-                    <Select
-                        value={selectedDepartment}
-                        onChange={(e) => setSelectedDepartment(e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        sx={{ mt: 2 }}
-                    >
-                        {departmentOptions.map((dept) => (
-                            <MenuItem key={dept.id} value={dept.name}>
-                                {dept.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => {
-                        setTransferOpen(false);
-                        setSelectedDepartment('');
-                    }} color="primary">
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={confirmTransfer}
-                        color="success"
-                        disabled={!selectedDepartment}
-                    >
-                        Confirm
-                    </Button>
-                </DialogActions>
-            </Dialog>
 
             {/* Handover Notes Dialog */}
             <Dialog open={handoverModalOpen} onClose={() => setHandoverModalOpen(false)}>
@@ -431,6 +423,36 @@ function TableDocument() {
                     </Button>
                     <Button onClick={confirmUploadWithNotes} color="success">
                         Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Display Handover Notes Dialog */}
+            <Dialog open={displayHandoverModalOpen} onClose={() => {
+                setDisplayHandoverModalOpen(false);
+                setHandoverNotes('');
+            }}>
+                <DialogTitle>Display Handover Notes</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Note Description"
+                        type="text"
+                        fullWidth
+                        value={handoverNotes}
+                        multiline
+                        rows={4}
+                        variant="filled"
+                        disabled
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => {
+                        setDisplayHandoverModalOpen(false);
+                        setHandoverNotes('');
+                    }} color="primary">
+                        Close
                     </Button>
                 </DialogActions>
             </Dialog>
