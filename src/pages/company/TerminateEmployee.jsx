@@ -1,8 +1,8 @@
 import { Grid, Typography } from '@mui/material';
-import EmployeesTable from './components/tableFireEmployee';
+import EmployeesTable from './components/tableTerminateEmployee';
 import RankEmployeesTable from './components/rankEmployee';
 
-function FireEmployee() {
+function TerminateEmployee() {
     return (
         <>
             <Grid
@@ -19,7 +19,7 @@ function FireEmployee() {
                     <EmployeesTable />
                 </Grid>
                 <Grid item xs={12}>
-                    <Typography variant="h4">Run TOPSIS Analysis</Typography>
+                    <Typography variant="h4" style={{ marginTop: '60px' }}>Run TOPSIS Analysis</Typography>
                 </Grid>
                 <Grid item xs={12}>
                     <RankEmployeesTable />
@@ -29,4 +29,4 @@ function FireEmployee() {
     );
 }
 
-export default FireEmployee;
+export default TerminateEmployee;

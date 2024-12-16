@@ -16,7 +16,7 @@ const PATHS = {
             DEPARTMENTS: '/company/manage/departments',
         },
 
-        FIREEMPLOYEE: '/company/fireemployee',
+        TERMINATEEMPLOYEE: '/company/terminateemployee',
         REHIRE: '/company/rehire',
         DOCUMENTLIST: '/company/transferknowledge/:employeeId',
     },
