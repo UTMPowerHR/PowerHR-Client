@@ -107,7 +107,7 @@ export const documentData = [
         uploader: 'ATHIRAH SHAZLIN',
         date: '2024-12-03',
         department: 'Admin',
-        notes: '',
+        notes: 'This document is a test. This is a test note.',
     },
 
     // Add more documents as needed
