@@ -25,6 +25,7 @@ function TransferKnowledge() {
             setSelectedEmployee({ id: employee._id, name: employee.firstName + " " + employee.lastName, 
                                   email: employee.email,
                                   terminationDate: employee.terminationDate,
+                                  department: employee.department,
                                 }); // Replace with actual data fetching logic
         }
     }, [employeeId, employees]);

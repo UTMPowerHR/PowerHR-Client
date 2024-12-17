@@ -20,6 +20,7 @@ import {
     DialogActions,
     DialogTitle,
     Select,
+    Menu,
     MenuItem,
     FormControlLabel,
 } from '@mui/material';
@@ -42,6 +43,7 @@ import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
 import determineRole from './roleHierarchy';
 import { useNavigate } from 'react-router-dom';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -63,9 +65,11 @@ function TableTerminateEmployees() {
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [selectedDepartments, setSelectedDepartments] = useState([]);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const openMenu = Boolean(anchorEl);
     const navigate = useNavigate();
 
-                   
+
 
     // Extract department names from the fetched data
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
@@ -226,6 +230,17 @@ function TableTerminateEmployees() {
         navigate(`/company/transferknowledge/${id}`);
     };
 
+    const handleMenuClick = (event, employeeID) => {
+        setAnchorEl(event.currentTarget);
+        const clickedEmployee = employees.find((employee) => employee._id == employeeID);
+        setSelectedEmployee(clickedEmployee);
+    };
+    
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedEmployee(null);
+    }
+
 
     return (
         <>
@@ -306,12 +321,12 @@ function TableTerminateEmployees() {
                                     <TableCell>Department</TableCell>
                                     <TableCell>Joined</TableCell>
                                     <TableCell>Terminate</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
+                                    <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {filteredEmployees.map((employee) => {
-                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isBefore(dayjs(), 'day');                                    
+                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isBefore(dayjs(), 'day');
                                     const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isSameOrAfter(dayjs(), 'day');
                                     // console.log(dayjs(employee.terminationDate).isBefore(dayjs()));
                                     console.log(isTerminated);
@@ -343,26 +358,25 @@ function TableTerminateEmployees() {
                                             </TableCell>
 
 
-                                            <TableCell align="right">
+                                            <TableCell sx={{ color: '#e0e0e0', textAlign: 'center', }}>
                                                 {(isPendingTermination ^ isTerminated) ? (
-                                                    <Button
-                                                        sx={{
-                                                            border: '2px solid',
-                                                            borderColor: '#4a93ec',
-                                                            color: '#ffffff',
-                                                            backgroundColor: 'rgba(74, 147, 236, 1)',
-                                                            borderRadius: '8px',
-                                                            padding: '4px',
-                                                            fontSize: '1rem',
-                                                            fontWeight: 'bold',
-                                                            '&:hover': {
-                                                                backgroundColor: 'rgba(75, 132, 194, 1)',
-                                                            },
-                                                        }}
-                                                        onClick={() => handleManageDocument(employee._id)}
-                                                    >
-                                                        Manage Document
-                                                    </Button>
+                                                    <>
+                                                        <IconButton onClick={(event) => handleMenuClick(event, employee._id)}>
+                                                            <MoreHorizIcon  />
+                                                        </IconButton>
+                                                        <Menu
+                                                            id="basic-menu"
+                                                            anchorEl={anchorEl}
+                                                            open={openMenu}
+                                                            onClose={handleMenuClose}
+                                                            MenuListProps={{
+                                                                'aria-labelledby': 'basic-button',
+                                                            }}
+                                                        >
+                                                            <MenuItem onClick={() => handleManageDocument(selectedEmployee._id)}>Manage Document</MenuItem>
+                                                            <MenuItem>Manage Final Settlement</MenuItem>
+                                                        </Menu>
+                                                    </>
                                                 ) : (
                                                     <IconButton
                                                         onClick={() => handleTerminateClick(employee._id)}

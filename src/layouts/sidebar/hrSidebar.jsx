@@ -48,6 +48,10 @@ const hrSection = [
                         title: 'Rehire Employees',
                         path: PATHS.COMPANY.REHIRE,
                     },
+                    {
+                        title: 'Manage Final Settlement',
+                        path: PATHS.COMPANY.FINAL_SETTLEMENT,
+                    },
                 ],
             },
             {
