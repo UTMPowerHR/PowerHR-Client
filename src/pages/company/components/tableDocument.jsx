@@ -39,10 +39,8 @@ function TableDocument({ selectedEmployee }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredDocs, setFilteredDocs] = useState(documents);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [editingId, setEditingId] = useState(null); // Track which document is being edited
-    const [editedName, setEditedName] = useState(''); // Track the new name for editing
-    const [transferOpen, setTransferOpen] = useState(false);
-    const [selectedDepartment, setSelectedDepartment] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editedName, setEditedName] = useState('');
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [departmentOptions, setDepartmentOptions] = useState([]);
     const [page, setPage] = useState(0);
@@ -104,7 +102,7 @@ function TableDocument({ selectedEmployee }) {
     };
 
     const getDepartmentName = () => {
-        const department = departmentOptions.find((dept) => dept._id === user.department);
+        const department = departmentOptions.find((dept) => dept._id === selectedEmployee.department);
         return department ? department.name : 'Unknown Department';
     };
 
@@ -131,6 +129,7 @@ function TableDocument({ selectedEmployee }) {
         setHandoverModalOpen(true);
     };
 
+    //Handle Delete Document
     const handleDelete = (id) => {
         if (confirm("Are you sure you want to delete the file from the list?")) {
             const updatedDocuments = documents.filter(doc => doc.id !== id);
@@ -138,9 +137,15 @@ function TableDocument({ selectedEmployee }) {
         }
     };
 
+    //Handle Edit Document name
     const handleEdit = (id, currentName) => {
         setEditingId(id);
         setEditedName(currentName);
+    };
+    
+    const handleCloseEdit = () => {
+        setEditingId(null);
+        setEditedName('');
     };
 
     const getFileNameById = (id) => {
@@ -168,18 +173,22 @@ function TableDocument({ selectedEmployee }) {
 
         if (!editedName) {
             alert("Invalid Filename. Please enter a filename.");
+            handleCloseEdit();
             return;
         }
         else if (isNameContainSpecialChar(getBaseName(editedName))) {
             alert("Invalid Filename. Please enter a valid filename without any special characters.");
+            handleCloseEdit();
             return;
         }
         else if (getBaseName(editedName).length > 30) {
             alert("Invalid Filename. Filename must not exceed 30 characters.");
+            handleCloseEdit();
             return;
         }
         else if (isNameExists(editedName) && (editedName != getFileNameById(id))) {
             alert("Duplicate Filename. The Filename already existed.");
+            handleCloseEdit();
             return;
         }
 
@@ -199,9 +208,8 @@ function TableDocument({ selectedEmployee }) {
                 return doc;
             })
         );
-
-        setEditingId(null);
-        setEditedName('');
+        
+        handleCloseEdit();
     };
 
     //Table Pagination
