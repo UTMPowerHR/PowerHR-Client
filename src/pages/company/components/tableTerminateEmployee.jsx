@@ -341,7 +341,6 @@ function TableTerminateEmployees() {
                                             <TableCell padding="checkbox">
                                                 <Checkbox />
                                             </TableCell>
-                                            <TableCell>{employee._id}</TableCell>
                                             <TableCell>{employee.firstName + ' ' + employee.lastName}</TableCell>
                                             <TableCell>{employee.email}</TableCell>
                                             <TableCell>{employee.jobTitle}</TableCell>
