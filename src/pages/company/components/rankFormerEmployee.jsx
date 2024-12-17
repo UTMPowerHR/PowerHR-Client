@@ -15,9 +15,10 @@ import {
     Button,
     Checkbox,
     Input,
+    Dialog,
+    DialogContent,
+    TextField,
 } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
 import dayjs from 'dayjs';
 import {
     useCreateResumeMutation,
@@ -26,6 +27,20 @@ import {
     useUpdateResumeMutation,
     useDeleteResumeMutation,
 } from '@features/resume/resumeApiSlice';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import determineRole from './roleHierarchy';
+import {
+    useGetEmployeesQuery,
+    useUpdateEmployeeMutation,
+    useGetDepartmentsQuery,
+} from '@features/company/companyApiSlice';
+import { setEmployees } from '@features/company/companySlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 // Helper function to calculate education level score
 const calculateEducationScore = (resume) => {
@@ -310,6 +325,12 @@ function RankedEmployeesTable() {
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const { data: allResumes, isLoading: isResumesLoading } = useGetAllResumesQuery(user.company);
     const availableRoles = [...new Set(employees.map((employee) => employee.jobTitle))];
+    const [rehiring, setRehiring] = useState(false);
+    const [open, setOpen] = useState(false);
+
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [updateEmployee] = useUpdateEmployeeMutation();
+    const dispatch = useDispatch();
 
 
 
@@ -335,6 +356,72 @@ function RankedEmployeesTable() {
                 i === index ? { ...item, weight: parseFloat(newWeight) || 0 } : item
             )
         );
+    };
+
+    // Handler for rehiring an employee
+    const handleRehire = async () => {
+        if (selectedEmployee) {
+            setOpen(false);
+            setRehiring(true);
+
+            try {
+                await updateEmployee({
+                    ...selectedEmployee,
+                    jobTitle: formik.values.jobTitle,
+                    salary: formik.values.salary,
+                    department: formik.values.department,
+                    hireDate: formik.values.hireDate,
+                    terminationDate: null,
+                }).unwrap();
+
+                dispatch(setEmployees(data.employees));
+                formik.resetForm();
+            } catch (error) {
+                console.error("Failed to rehire employee:", error);
+            } finally {
+                setRehiring(false);
+                setSelectedEmployee(null);
+            }
+        }
+    };
+
+    // Formik for rehire form
+    const formik = useFormik({
+        initialValues: {
+            firstName: '',
+            lastName: '',
+            jobTitle: '',
+            department: '',
+            hireDate: dayjs().format(),
+            salary: 0,
+        },
+        validationSchema: Yup.object().shape({
+            jobTitle: Yup.string().required('Job title is required'),
+            department: Yup.string().required('Department is required'),
+            hireDate: Yup.date().required('Hire date is required'),
+            salary: Yup.number().required('Salary is required'),
+        }),
+        onSubmit: handleRehire,
+    });
+
+
+
+    // Handler to open rehire dialog
+    const handleOpenDialog = (employee) => {
+        setSelectedEmployee(employee);
+        formik.setValues({
+            firstName: employee.firstName,
+            lastName: employee.lastName,
+            email: employee.email,
+            personalEmail: employee.personalEmail,
+            jobTitle: employee.jobTitle,
+            department: employee.department,
+            hireDate: employee.hireDate,
+            salary: employee.salary,
+            gender: employee.gender,
+            terminationDate: employee.terminationDate,
+        });
+        setOpen(true);
     };
 
     // Handle filter application
@@ -385,8 +472,8 @@ function RankedEmployeesTable() {
     }, [rankedEmployees, allResumes]);
 
     return (
-        <Stack spacing={4} p ={0}>
-            <Card sx={{ p:4, mx: 'auto'}}>
+        <Stack spacing={4} p={0}>
+            <Card sx={{ p: 4, mx: 'auto' }}>
                 <Stack spacing={3}>
                     <FormControl fullWidth>
                         <InputLabel id="role-select-label">Select Role</InputLabel>
@@ -438,7 +525,7 @@ function RankedEmployeesTable() {
                         </TableBody>
                     </Table>
 
-                        {/* Role Filter
+                    {/* Role Filter
                     <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                         <InputLabel>Role</InputLabel>
                         <Select
@@ -453,7 +540,7 @@ function RankedEmployeesTable() {
                         </Select>
                     </FormControl> */}
 
-                        {/* Department Filter
+                    {/* Department Filter
                     <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
                         <InputLabel>Department</InputLabel>
                         <Select
@@ -468,21 +555,21 @@ function RankedEmployeesTable() {
                         </Select>
                     </FormControl> */}
 
-                        {/* Apply Filter Button */}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={handleApplyFilter}
-                            // disabled={!selectedRole}
-                            sx={{
-                                backgroundColor: '#4a93ec',
-                                '&:hover': {
-                                    backgroundColor: '#3b7bc8',
-                                },
-                            }}
-                        >
-                            Run TOPSIS Analysis
-                        </Button>
+                    {/* Apply Filter Button */}
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleApplyFilter}
+                        // disabled={!selectedRole}
+                        sx={{
+                            backgroundColor: '#4a93ec',
+                            '&:hover': {
+                                backgroundColor: '#3b7bc8',
+                            },
+                        }}
+                    >
+                        Run TOPSIS Analysis
+                    </Button>
                 </Stack>
             </Card>
 
@@ -494,10 +581,9 @@ function RankedEmployeesTable() {
                         <TableRow>
                             <TableCell>Rank</TableCell>
                             <TableCell>Name</TableCell>
-                            {/* <TableCell>Department</TableCell> */}
-                            {/* <TableCell>Work Experience (Months)</TableCell> */}
+                            <TableCell>Department</TableCell>
                             <TableCell align="right">TOPSIS Score</TableCell>
-                            {/* <TableCell>Resume Details</TableCell> */}
+                            <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -505,52 +591,154 @@ function RankedEmployeesTable() {
                             <TableRow key={employee._id}>
                                 <TableCell>{index + 1}</TableCell>
                                 <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                                {/* <TableCell>
-                                    {departmentsData?.departments
-                                        .find(dept => dept._id === employee.department)?.name || employee.department}
-                                </TableCell>
                                 <TableCell>
-                                    {dayjs(employee.terminationDate).diff(dayjs(employee.hireDate), 'month')}
-                                </TableCell> */}
+                                    {departmentsData?.departments
+                                        .find(dept => dept._id === employee.department)?.name || 'N/A'}
+                                </TableCell>
                                 <TableCell align="right">
                                     {(employee.topisisScore * 100).toFixed(2)}%
                                 </TableCell>
-                                {/* <TableCell>
-                                    {employee.resume ? (
-                                        <Stack spacing={1}>
-                                            <Typography variant="body2" fontWeight="bold">
-                                                {employee.resume.basicDetail?.name}
-                                            </Typography>
-                                            <Typography variant="body2" color="textSecondary">
-                                                {employee.resume.basicDetail?.title}
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                Experiences: {employee.resume.experience?.value?.length || 0}
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                Email: {employee.resume.basicDetail?.email}
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                Location: {employee.resume.basicDetail?.location}
-                                            </Typography>
-                                            {employee.resume.education?.value?.map((edu, eduIndex) => (
-                                                <Typography key={eduIndex} variant="body2" color="textSecondary">
-                                                    {edu.institution} - {edu.degree}
-                                                </Typography>
-                                            ))}
-                                        </Stack>
-                                    ) : (
-                                        <Typography variant="body2" color="error">
-                                            No Resume Found
-                                        </Typography>
-                                    )}
-                                </TableCell> */}
+                                <TableCell align="right">
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => handleOpenDialog(employee)}
+                                        disabled={rehiring}
+                                    >
+                                        Rehire
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             )}
+
+            <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+                <DialogContent>
+                    <Stack spacing={2}>
+                        <Typography variant="h5">Edit Rehire Employee Profile</Typography>
+                        <TextField
+                            fullWidth
+                            label="First Name"
+                            name="firstName"
+                            onBlur={formik.handleBlur}
+                            onChange={formik.handleChange}
+                            value={formik.values.firstName}
+                            error={formik.touched.firstName && Boolean(formik.errors.firstName)}
+                            helperText={formik.touched.firstName && formik.errors.firstName}
+                            disabled
+                        />
+                        <TextField
+                            fullWidth
+                            label="Last Name"
+                            name="lastName"
+                            onBlur={formik.handleBlur}
+                            onChange={formik.handleChange}
+                            value={formik.values.lastName}
+                            error={formik.touched.lastName && Boolean(formik.errors.lastName)}
+                            helperText={formik.touched.lastName && formik.errors.lastName}
+                            disabled
+                        />
+                        <FormControl variant="filled" fullWidth>
+                            <InputLabel>Gender</InputLabel>
+                            <Select
+                                value={formik.values.gender}
+                                onChange={formik.handleChange}
+                                name="gender"
+                                disabled
+                            >
+                                <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                                <MenuItem value="Male">Male</MenuItem>
+                                <MenuItem value="Female">Female</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            name="email"
+                            value={formik.values.email}
+                            disabled
+                        />
+                        <TextField
+                            fullWidth
+                            label="Personal Email"
+                            name="personalEmail"
+                            value={formik.values.personalEmail}
+                            disabled
+                        />
+                        <TextField
+                            fullWidth
+                            label="Job Title"
+                            name="jobTitle"
+                            onBlur={formik.handleBlur}
+                            onChange={formik.handleChange}
+                            value={formik.values.jobTitle}
+                            required
+                        />
+                        <TextField
+                            fullWidth
+                            label="Salary"
+                            name="salary"
+                            onBlur={formik.handleBlur}
+                            onChange={formik.handleChange}
+                            value={formik.values.salary}
+                            required
+                        />
+                        <FormControl fullWidth required>
+                            <InputLabel>Department</InputLabel>
+                            <Select
+                                value={formik.values.department}
+                                onChange={formik.handleChange}
+                                name="department"
+                            >
+                                {departmentsData?.departments.map((department) => (
+                                    <MenuItem key={department._id} value={department._id}>
+                                        {department.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <Stack direction="row" spacing={2} justifyContent="right">
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    fullWidth
+                                    label="Hire Date *"
+                                    name="hireDate"
+                                    value={formik.values.hireDate ? dayjs(formik.values.hireDate) : null}
+                                    onChange={(newValue) => {
+                                        formik.setFieldValue('hireDate', newValue ? newValue.toISOString() : null); // Store ISO string in formik
+                                    }}
+                                    required
+                                />
+                            </LocalizationProvider>
+                        </Stack>
+                    </Stack>
+
+                    <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                setOpen(false);
+                                formik.resetForm();
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleRehire}
+                            disabled={rehiring}
+                        >
+                            {rehiring ? 'Rehiring' : 'Rehire'}
+                        </Button>
+                    </Stack>
+                </DialogContent>
+            </Dialog>
         </Stack>
+
+
     );
 }
 
