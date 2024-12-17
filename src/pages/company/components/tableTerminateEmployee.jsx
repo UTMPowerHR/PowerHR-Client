@@ -230,6 +230,10 @@ function TableTerminateEmployees() {
         navigate(`/company/transferknowledge/${id}`);
     };
 
+    const handleManageFinalSettlement = (id) => {
+        navigate(`/company/settlement/${id}`);
+    };
+
     const handleMenuClick = (event, employeeID) => {
         setAnchorEl(event.currentTarget);
         const clickedEmployee = employees.find((employee) => employee._id == employeeID);
@@ -374,7 +378,7 @@ function TableTerminateEmployees() {
                                                             }}
                                                         >
                                                             <MenuItem onClick={() => handleManageDocument(selectedEmployee._id)}>Manage Document</MenuItem>
-                                                            <MenuItem>Manage Final Settlement</MenuItem>
+                                                            <MenuItem onClick={() => handleManageFinalSettlement(selectedEmployee._id)}>Manage Final Settlement</MenuItem>
                                                         </Menu>
                                                     </>
                                                 ) : (
