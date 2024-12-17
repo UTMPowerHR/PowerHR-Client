@@ -4,6 +4,7 @@ import CheckLogin from '@utils/checkLogin';
 import * as Auth from '@pages/auth';
 import PATHS from '@constants/routes/paths';
 import { Registration } from '@pages/company';
+import ResumeTest from '@features/resume/ResumeTest';
 
 const publicRoutes = (
     <>
@@ -25,6 +26,9 @@ const publicRoutes = (
 
             <Route>
                 <Route path={PATHS.COMPANY.REGISTER} element={<Registration />} />
+            </Route>
+            <Route element={<Layout />}>
+                <Route path="/resume-test" element={<ResumeTest />} />
             </Route>
         </Route>
     </>
