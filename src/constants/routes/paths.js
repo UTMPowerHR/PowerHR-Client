@@ -19,6 +19,7 @@ const PATHS = {
         FIREEMPLOYEE: '/company/fireemployee',
         REHIRE: '/company/rehire',
         DOCUMENTLIST: '/company/transferknowledge/:employeeId',
+        FINAL_SETTLEMENT: '/company/settlement/:employeeId'
     },
     DASHBOARD: {
         INDEX: '/dashboard',
