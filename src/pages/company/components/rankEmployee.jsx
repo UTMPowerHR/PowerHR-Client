@@ -18,6 +18,9 @@ import {
     DialogContent,
     DialogActions,
     DialogTitle,
+    TextField,
+    Checkbox,
+    Input,
 } from '@mui/material';
 import {
     useGetEmployeesQuery,
@@ -29,16 +32,13 @@ import determineRole from './roleHierarchy';
 import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
+import {
+    useGetResumeByUserQuery,
+    useGetAllResumesQuery,
+} from '@features/resume/resumeApiSlice';
 
-function performTOPSISAnalysis(employees, selectedRole, user) {
+function performTOPSISAnalysis(roleSpecificEmployees, validResumes) {
 
-    const roleSpecificEmployees = employees.filter((employee) => {
-        const employeeRoleLevel = determineRole(employee.jobTitle); // Get hierarchy level for the employee's role
-        return employee.jobTitle === selectedRole &&
-            employeeRoleLevel <= 1 &&
-            employee._id !== user._id &&
-            employee.terminationDate == null;
-    });
 
     console.log(roleSpecificEmployees);
 
@@ -124,7 +124,7 @@ function performTOPSISAnalysis(employees, selectedRole, user) {
 }
 
 function RankEmployee() {
-    
+
     const user = useSelector((state) => state.auth.user);
     const [confirmationOpen, setConfirmationOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -133,9 +133,17 @@ function RankEmployee() {
     const [updateEmployee] = useUpdateEmployeeMutation();
     const [terminationLetter, setTerminationLetter] = useState(null);
     const employees = useSelector((state) => state.company.employees); // Fetch employees from Redux store
-    const [selectedRole, setSelectedRole] = useState('');
+    const [selectedRole, setSelectedRole] = useState('All Roles');
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
+    const { data: allResumes, error, isLoading } = useGetAllResumesQuery();
+    const [criteria, setCriteria] = useState([
+        { name: 'yearsOfExperience', weight: 0.2, selected: true },
+        { name: 'educationLevel', weight: 0.2, selected: true },
+        { name: 'softSkills', weight: 0.2, selected: true },
+        { name: 'technicalSkills', weight: 0.2, selected: true },
+        { name: 'locationFit', weight: 0.2, selected: true },
+    ]);
 
     // Extract unique roles from employee data
     const availableRoles = [...new Set(employees.map((employee) => employee.jobTitle))];
@@ -146,16 +154,41 @@ function RankEmployee() {
     };
 
     // Handle Run TOPSIS Analysis button click
-    const handleRunTOPSIS = () => {
-        const rankedEmployeeList = performTOPSISAnalysis(
-            employees,
-            selectedRole,
-            user
-        );
+    const handleRunTOPSIS = async () => {
+        // Ensure allResumes is available before proceeding
+        if (isLoading) {
+            console.log('Loading resumes...');
+            return;
+        }
+
+        if (error) {
+            console.error('Error fetching resumes:', error);
+            return;
+        }
+
+        const roleSpecificEmployees = employees.filter((employee) => {
+            const employeeRoleLevel = determineRole(employee.jobTitle); // Get hierarchy level for the employee's role
+            return (
+                employee.jobTitle === selectedRole &&
+                employeeRoleLevel <= 1 &&
+                employee._id !== user._id &&
+                employee.terminationDate == null
+            );
+        });
+
+        const validResumes = roleSpecificEmployees.map((employee) => {
+            const resume = allResumes.find((resume) => resume.user === employee._id);
+            return resume ? { id: employee._id, resume } : null;
+        }).filter(Boolean);
+
+        console.log(validResumes);
+        // Run TOPSIS analysis
+        const rankedEmployeeList = performTOPSISAnalysis(roleSpecificEmployees, validResumes);
 
         // Update the filtered employees state
         setFilteredEmployees(rankedEmployeeList.slice(0, 10));
     };
+
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
@@ -233,10 +266,38 @@ function RankEmployee() {
         }
     };
 
+    const handleCheckboxChange = (index) => {
+        setCriteria((prev) =>
+            prev.map((item, i) =>
+                i === index ? { ...item, selected: !item.selected } : item
+            )
+        );
+    };
+
+    const handleWeightChange = (index, newWeight) => {
+        setCriteria((prev) =>
+            prev.map((item, i) =>
+                i === index ? { ...item, weight: parseFloat(newWeight) || 0 } : item
+            )
+        );
+    };
+
+    const handleApplyCriteria = () => {
+        const selectedCriteria = criteria.filter((criterion) => criterion.selected);
+        const totalWeight = selectedCriteria.reduce((sum, criterion) => sum + criterion.weight, 0);
+
+        if (totalWeight !== 1) {
+            alert('The total weight must equal 1.');
+            return;
+        }
+
+        onApplyCriteria(selectedCriteria);
+    };
+
     return (
         <Stack spacing={4} p={0}>
 
-            <Card sx={{ p: 4, maxWidth: 500, mx: 'auto' }}>
+            <Card sx={{ p: 4, mx: 'auto' }}>
                 <Stack spacing={3}>
                     <FormControl fullWidth>
                         <InputLabel id="role-select-label">Select Role</InputLabel>
@@ -246,6 +307,7 @@ function RankEmployee() {
                             onChange={handleRoleChange}
                             label="Select Role"
                         >
+                            <MenuItem value="">All Roles</MenuItem>
                             {availableRoles.map((role) => (
                                 <MenuItem key={role} value={role}>
                                     {role}
@@ -253,6 +315,41 @@ function RankEmployee() {
                             ))}
                         </Select>
                     </FormControl>
+
+                    <Typography variant="h5" mb={2}>
+                        Select and Assign Weightage to Criteria
+                    </Typography>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Criteria</TableCell>
+                                <TableCell align="center">Select</TableCell>
+                                <TableCell align="center">Weightage</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {criteria.map((criterion, index) => (
+                                <TableRow key={criterion.name}>
+                                    <TableCell>{criterion.name}</TableCell>
+                                    <TableCell align="center">
+                                        <Checkbox
+                                            checked={criterion.selected}
+                                            onChange={() => handleCheckboxChange(index)}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Input
+                                            type="number"
+                                            value={criterion.weight}
+                                            onChange={(e) => handleWeightChange(index, e.target.value)}
+                                            disabled={!criterion.selected}
+                                            inputProps={{ min: 0, max: 1, step: 0.05 }}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
 
                     <Button
                         variant="contained"

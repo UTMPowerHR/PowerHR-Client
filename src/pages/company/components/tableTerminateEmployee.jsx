@@ -42,6 +42,7 @@ import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
 import determineRole from './roleHierarchy';
 import { useNavigate } from 'react-router-dom';
+import { id } from 'date-fns/locale';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -65,7 +66,7 @@ function TableTerminateEmployees() {
     const [selectedDepartments, setSelectedDepartments] = useState([]);
     const navigate = useNavigate();
 
-                   
+
 
     // Extract department names from the fetched data
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
@@ -322,6 +323,7 @@ function TableTerminateEmployees() {
                                             <TableCell padding="checkbox">
                                                 <Checkbox />
                                             </TableCell>
+                                            <TableCell>{employee._id}</TableCell>
                                             <TableCell>{employee.firstName + ' ' + employee.lastName}</TableCell>
                                             <TableCell>{employee.email}</TableCell>
                                             <TableCell>{employee.jobTitle}</TableCell>
