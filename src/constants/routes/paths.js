@@ -16,7 +16,7 @@ const PATHS = {
             DEPARTMENTS: '/company/manage/departments',
         },
 
-        FIREEMPLOYEE: '/company/fireemployee',
+        TERMINATEEMPLOYEE: '/company/terminateemployee',
         REHIRE: '/company/rehire',
         DOCUMENTLIST: '/company/transferknowledge/:employeeId',
         FINAL_SETTLEMENT: '/company/settlement/:employeeId'
@@ -104,6 +104,23 @@ const PATHS = {
     },
     ANALYTIC: {
         TURNOVER: '/analytic/turnover',
+    },
+    RESUME: {
+        INDEX: '/resume',
+        CREATE: '/resume/create',
+        EDIT: {
+            PATH: '/resume/:id/edit',
+            URL: function (id) {
+                return `/resume/${id}/edit`;
+            },
+        },
+        LIST: '/resume/list',
+        DELETE: {
+            PATH: '/resume/:id/delete',
+            URL: function (id) {
+                return `/resume/${id}/delete`;
+            },
+        },
     },
 };
 

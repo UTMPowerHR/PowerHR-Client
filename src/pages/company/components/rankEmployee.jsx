@@ -22,7 +22,6 @@ import {
 import {
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
-    useRegisterEmployeeMutation,
     useGetDepartmentsQuery,
 } from '@features/company/companyApiSlice';
 import dayjs from 'dayjs';
@@ -31,13 +30,106 @@ import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 
-function RankEmployee() {
-    const user = useSelector((state) => state.auth.user);
+function performTOPSISAnalysis(employees, selectedRole, user) {
 
+    const roleSpecificEmployees = employees.filter((employee) => {
+        const employeeRoleLevel = determineRole(employee.jobTitle); // Get hierarchy level for the employee's role
+        return employee.jobTitle === selectedRole &&
+            employeeRoleLevel <= 1 &&
+            employee._id !== user._id &&
+            employee.terminationDate == null;
+    });
+
+    console.log(roleSpecificEmployees);
+
+    // TOPSIS Criteria Definition
+    const criteria = [
+        { name: 'workExperience', weight: 0.3, type: 'benefit' },
+        { name: 'performanceRating', weight: 0.3, type: 'benefit' },
+        { name: 'skillLevel', weight: 0.2, type: 'benefit' },
+        { name: 'trainingCost', weight: 0.2, type: 'cost' }
+    ];
+
+    // Step 2: Normalize Data
+    const normalizeData = (data) => {
+        const normalized = data.map(employee => ({
+            ...employee,
+            workExperience: dayjs().diff(dayjs(employee.hireDate), 'month'),
+            performanceRating: employee.performanceRating || 3,
+            skillLevel: employee.skillLevel || 3,
+            trainingCost: employee.trainingCost || 5000
+        }));
+
+        const criteriaValues = {};
+        criteria.forEach(criterion => {
+            const values = normalized.map(e => e[criterion.name]);
+            criteriaValues[criterion.name] = {
+                min: Math.min(...values),
+                max: Math.max(...values)
+            };
+        });
+
+        return normalized.map(employee => {
+            const normalizedValues = {};
+
+            criteria.forEach(criterion => {
+                const { min, max } = criteriaValues[criterion.name];
+                const value = employee[criterion.name];
+
+                // Normalize benefit and cost criteria differently
+                let normalizedValue = criterion.type === 'benefit'
+                    ? (value - min) / (max - min)
+                    : (max - value) / (max - min);
+
+                // Ensure normalized value is between 0 and 1
+                normalizedValue = Math.max(0, Math.min(1, normalizedValue));
+
+                // Apply weight to normalized value
+                normalizedValues[criterion.name + 'Normalized'] = normalizedValue * criterion.weight;
+            });
+
+            return { ...employee, ...normalizedValues };
+        });
+    };
+
+    // Step 3: Calculate TOPSIS Scores
+    const calculateTOPSISScore = (normalizedData) => {
+        return normalizedData.map(employee => {
+            const positiveIdealDistance = Math.sqrt(
+                criteria.reduce((sum, criterion) => {
+                    const normalizedValue = employee[criterion.name + 'Normalized'] || 0;
+                    return sum + Math.pow(1 - normalizedValue, 2);
+                }, 0)
+            );
+
+            const negativeIdealDistance = Math.sqrt(
+                criteria.reduce((sum, criterion) => {
+                    const normalizedValue = employee[criterion.name + 'Normalized'] || 0;
+                    return sum + Math.pow(0 - normalizedValue, 2);
+                }, 0)
+            );
+
+            const topisisScore = negativeIdealDistance / (positiveIdealDistance + negativeIdealDistance);
+
+            return {
+                ...employee,
+                topisisScore: topisisScore == 0 ? 0 : topisisScore
+            };
+        }).sort((a, b) => b.topisisScore - a.topisisScore);
+    };
+
+    // Execute TOPSIS Analysis
+    const normalizedData = normalizeData(roleSpecificEmployees);
+    return calculateTOPSISScore(normalizedData);
+}
+
+function RankEmployee() {
+    
+    const user = useSelector((state) => state.auth.user);
     const [confirmationOpen, setConfirmationOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [fileError, setFileError] = useState('');
-    const [noticePeriod, setNoticePeriod] = useState('immediately');
+    const [noticePeriod, setNoticePeriod] = useState('Please Select');
     const [updateEmployee] = useUpdateEmployeeMutation();
     const [terminationLetter, setTerminationLetter] = useState(null);
     const employees = useSelector((state) => state.company.employees); // Fetch employees from Redux store
@@ -55,20 +147,14 @@ function RankEmployee() {
 
     // Handle Run TOPSIS Analysis button click
     const handleRunTOPSIS = () => {
-        // Get the hierarchy level for the selected role
-        const selectedRoleLevel = determineRole(selectedRole);
-
-        // Filter employees based on the selected role and hierarchy level
-        const roleSpecificEmployees = employees.filter((employee) => {
-            const employeeRoleLevel = determineRole(employee.jobTitle); // Get hierarchy level for the employee's role
-            return employee.jobTitle === selectedRole &&
-                employeeRoleLevel <= 1 &&
-                employee._id !== user._id &&
-                employee.terminationDate == null; // Match role and ensure hierarchy <= 1
-        });
+        const rankedEmployeeList = performTOPSISAnalysis(
+            employees,
+            selectedRole,
+            user
+        );
 
         // Update the filtered employees state
-        setFilteredEmployees(roleSpecificEmployees);
+        setFilteredEmployees(rankedEmployeeList.slice(0, 10));
     };
 
     const handleFileChange = (event) => {
@@ -109,9 +195,6 @@ function RankEmployee() {
             // Determine termination date based on selected notice period
             let terminationDate;
             switch (noticePeriod) {
-                case 'immediately':
-                    terminationDate = dayjs().format(); // Today's date
-                    break;
                 case '1_month':
                     terminationDate = dayjs().add(1, 'month').format();
                     break;
@@ -122,7 +205,7 @@ function RankEmployee() {
                     terminationDate = dayjs().add(6, 'month').format();
                     break;
                 default:
-                    terminationDate = dayjs().format();
+                    break;
             }
 
             const updatedEmployee = { ...selectedEmployee, terminationDate };
@@ -151,7 +234,7 @@ function RankEmployee() {
     };
 
     return (
-        <Stack spacing={4} p={4}>
+        <Stack spacing={4} p={0}>
 
             <Card sx={{ p: 4, maxWidth: 500, mx: 'auto' }}>
                 <Stack spacing={3}>
@@ -232,7 +315,7 @@ function RankEmployee() {
                                                     : 'Active'}
                                         </TableCell>
                                         <TableCell>
-                                            N/A
+                                            {(employee.topisisScore * 100).toFixed(2)}%
                                         </TableCell>
 
                                         <TableCell align="right">
@@ -285,7 +368,7 @@ function RankEmployee() {
                             displayEmpty
                             variant="outlined"
                         >
-                            <MenuItem value="immediately">Immediately</MenuItem>
+                            <MenuItem value="Please Select">Please Select</MenuItem>
                             <MenuItem value="1_month">1 Month</MenuItem>
                             <MenuItem value="3_months">3 Months</MenuItem>
                             <MenuItem value="6_months">6 Months</MenuItem>
@@ -313,7 +396,7 @@ function RankEmployee() {
                     <Button
                         onClick={confirmTerminateEmployee}
                         color="error"
-                        disabled={!terminationLetter}
+                        disabled={!terminationLetter || noticePeriod == "Please Select" || !/\.(pdf|doc|docx)$/i.test(terminationLetter.name)}
                     >
                         Confirm
                     </Button>

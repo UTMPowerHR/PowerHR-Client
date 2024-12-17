@@ -27,6 +27,7 @@ import SearchMdIcon from '@untitled-ui/icons-react/build/esm/SearchMd';
 import { useEffect, useState } from 'react';
 import { Scrollbar } from '@components/scrollbar';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import utc from 'dayjs/plugin/utc';
 import * as Yup from 'yup';
@@ -43,6 +44,7 @@ import determineRole from './roleHierarchy';
 import { useNavigate } from 'react-router-dom';
 
 dayjs.extend(utc);
+dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 function TableTerminateEmployees() {
@@ -57,11 +59,13 @@ function TableTerminateEmployees() {
     const [updateEmployee] = useUpdateEmployeeMutation();
     const [terminationLetter, setTerminationLetter] = useState(null);
     const [fileError, setFileError] = useState('');
-    const [noticePeriod, setNoticePeriod] = useState('immediately'); // Default value
+    const [noticePeriod, setNoticePeriod] = useState('Please Select'); // Default value
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [selectedDepartments, setSelectedDepartments] = useState([]);
     const navigate = useNavigate();
+
+                   
 
     // Extract department names from the fetched data
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
@@ -116,9 +120,6 @@ function TableTerminateEmployees() {
             // Determine termination date based on selected notice period
             let terminationDate;
             switch (noticePeriod) {
-                case 'immediately':
-                    terminationDate = dayjs().format(); // Today's date
-                    break;
                 case '1_month':
                     terminationDate = dayjs().add(1, 'month').format();
                     break;
@@ -129,16 +130,10 @@ function TableTerminateEmployees() {
                     terminationDate = dayjs().add(6, 'month').format();
                     break;
                 default:
-                    terminationDate = dayjs().format();
+                    break;
             }
 
             const updatedEmployee = { ...selectedEmployee, terminationDate };
-
-            // Create FormData to send the file
-            const formData = new FormData();
-            formData.append('terminationLetter', terminationLetter);
-            formData.append('terminationDate', terminationDate);
-            formData.append('employeeId', selectedEmployee._id);
 
             await updateEmployee(updatedEmployee); // Update employee in the database
 
@@ -238,7 +233,7 @@ function TableTerminateEmployees() {
                 <Stack direction="column" spacing={4} p={2}>
                     {/* Role Filters */}
                     <Stack direction="column">
-                        <Typography variant="subtitle1">Filter by Role</Typography>
+                        <Typography variant="subtitle1" sx={{ fontSize: '1.5rem' }}>Filter by Role</Typography>
                         {availableRoles.map((role) => (
                             <FormControlLabel
                                 key={role}
@@ -256,7 +251,7 @@ function TableTerminateEmployees() {
 
                     {/* Department Filters */}
                     <Stack direction="column">
-                        <Typography variant="subtitle1">Filter by Department</Typography>
+                        <Typography variant="subtitle1" sx={{ fontSize: '1.5rem' }}>Filter by Department</Typography>
                         {departmentOptions.map((dept) => (
                             <FormControlLabel
                                 key={dept}
@@ -316,8 +311,12 @@ function TableTerminateEmployees() {
                             </TableHead>
                             <TableBody>
                                 {filteredEmployees.map((employee) => {
-                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs());
-                                    const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isAfter(dayjs());
+                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isBefore(dayjs(), 'day');                                    
+                                    const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isSameOrAfter(dayjs(), 'day');
+                                    // console.log(dayjs(employee.terminationDate).isBefore(dayjs()));
+                                    console.log(isTerminated);
+                                    console.log(isPendingTermination);
+
                                     return (
                                         <TableRow key={employee._id}>
                                             <TableCell padding="checkbox">
@@ -421,7 +420,7 @@ function TableTerminateEmployees() {
                                 displayEmpty
                                 variant="outlined"
                             >
-                                <MenuItem value="immediately">Immediately</MenuItem>
+                                <MenuItem value="Please Select">Please Select</MenuItem>
                                 <MenuItem value="1_month">1 Month</MenuItem>
                                 <MenuItem value="3_months">3 Months</MenuItem>
                                 <MenuItem value="6_months">6 Months</MenuItem>
@@ -449,7 +448,7 @@ function TableTerminateEmployees() {
                         <Button
                             onClick={confirmTerminateEmployee}
                             color="error"
-                            disabled={!terminationLetter}
+                            disabled={!terminationLetter || noticePeriod == "Please Select" || !/\.(pdf|doc|docx)$/i.test(terminationLetter.name)}
                         >
                             Confirm
                         </Button>
