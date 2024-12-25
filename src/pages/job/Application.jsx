@@ -26,7 +26,7 @@ import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import { useUpdateApplicationMutation } from '../../features/job/jobApiSlice';
-import { useRegisterEmployeeMutation } from '../../features/company/companyApiSlice';
+import { useUpdateUserMutation } from '../../features/user/userApiSlice';
 
 export default function Application() {
     const { id } = useParams();
@@ -34,7 +34,7 @@ export default function Application() {
     const { data, isLoading } = useGetApplicationsByPostingQuery(id);
     const [open, setOpen] = useState('');
     const [updateApplication] = useUpdateApplicationMutation();
-    const [registerEmployee] = useRegisterEmployeeMutation();
+    const [updateUser] = useUpdateUserMutation();
 
     const formik = useFormik({
         initialValues: {
@@ -58,52 +58,27 @@ export default function Application() {
                     },
                 });
 
+                const updatedApplications = data[0].applications.filter(
+                    (application) => application._id !== open // Remove the accepted application
+                );
+        
+                // Trigger the user update if status is Accepted
                 if (values.status === 'Accepted') {
-                    const application = data[0].applications.find(
-                        (application) => application._id === open
-                    );
-                
-                    console.log('Applications Data:', data[0]);
-                    console.log('Application Data:', application);
-                
-                    // Defensive checks to ensure required fields are present
-                    if (!application) {
-                        console.error('Missing applicant!');
-                        return;
-                    } 
-                    if (!data[0].posting) {
-                        console.error('Missing posting!');
-                        return;
-                    } 
-                    if (!data[0].posting.job) {
-                        console.error('Missing posting job!');
-                        return;
-                    }
-                
-                    // Create a new employee email
-                    const companyName = data[0].posting.job.company.name.replace(/\s+/g, '').toLowerCase(); // Remove spaces and convert to lowercase
-                    const employeeEmail = `${application.applicant.firstName.toLowerCase()}.${application.applicant.lastName.toLowerCase()}@${companyName}.com`;
-
-                    // Extract necessary fields from the application
-                    const employeeData = {
-                        company: data[0].posting.job.company._id, // Company ID from top-level posting
-                        firstName: application.applicant.firstName, // Applicant's first name
-                        lastName: application.applicant.lastName, // Applicant's last name
-                        email: employeeEmail, // Applicant's email
-                        personalEmail: application.applicant.email, // Personal email
-                        password: '123456', // Default password
-                        gender: application.applicant.gender || 'Prefer not to say', // Default gender if not available
-                        jobTitle: data[0].posting.job.title || 'Unassigned', // Job title from top-level posting
-                        salary: data[0].posting.salaryRange.min || 0, // Minimum salary from top-level posting
-                    };
-                
-                    console.log('Registering Employee Data:', employeeData);
-                
-                    // Call the registerEmployee mutation
-                    const response = await registerEmployee(employeeData).unwrap();
-                
-                    console.log('Employee Registration Response:', response);
+                    const application = data[0].applications.find((app) => app._id === open);
+                    const applicantId = application.applicant._id;
+        
+                    console.log('Triggering updateUser API with:', applicantId);
+                    await updateUser({
+                        role: 'applicant',
+                        id: applicantId,
+                        user: { statusType: 'Accepted' },
+                    });
+        
+                    console.log('User update API called successfully');
                 }
+        
+                // Optimistically update the UI with the updated applications list
+                data[0].applications = updatedApplications;
                                 
                 setOpen('');
             } catch (error) {
