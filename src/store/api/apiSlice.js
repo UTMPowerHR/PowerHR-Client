@@ -34,7 +34,7 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 
 export const apiSlice = createApi({
     baseQuery: baseQueryWithReauth,
-    tagTypes: ['Form', 'Application', 'Company'],
+    tagTypes: ['Form', 'Application', 'Company', 'Document'],
     // eslint-disable-next-line
     endpoints: (_builder) => ({}),
 });
