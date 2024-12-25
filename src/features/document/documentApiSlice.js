@@ -24,10 +24,18 @@ export const documentApiSlice = apiSlice.injectEndpoints({
             }),
             providesTags: ['Documents'],
         }),
+        downloadDocument: builder.mutation({
+            query: (id) => ({
+                url: `/document/download/` + id,
+                method: 'GET',
+                responseHandler: (response) => response.blob(), // Expect binary data
+            }),
+        }),        
     }),
 });
 
 export const { 
     useUploadDocumentMutation,
     useGetAllDocumentQuery,
+    useDownloadDocumentMutation,
 } = documentApiSlice;
