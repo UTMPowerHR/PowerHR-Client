@@ -27,15 +27,16 @@ import { Delete, Edit, Save } from '@mui/icons-material';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
-import { documentData } from './documentData';
-import { array } from 'yup';
+// import { documentData } from './documentData';
 import _ from 'lodash';
+import { useUploadDocumentMutation, useGetAllDocumentQuery, useDeleteDocumentMutation } from '@features/document/documentApiSlice';
 
 dayjs.extend(utc);
 
 function TableDocument({ selectedEmployee }) {
     const user = useSelector((state) => state.auth.user);
-    const [documents, setDocuments] = useState(documentData);
+    const { data: documentData } = useGetAllDocumentQuery();
+    const [documents, setDocuments] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredDocs, setFilteredDocs] = useState(documents);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -48,12 +49,20 @@ function TableDocument({ selectedEmployee }) {
     const [handoverNotes, setHandoverNotes] = useState('');
     const [handoverModalOpen, setHandoverModalOpen] = useState(false);
     const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
+    const [uploadDocument] = useUploadDocumentMutation();
+    const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation();
 
     useEffect(() => {
         if (departmentsData) {
             setDepartmentOptions(departmentsData.departments);
         }
     }, [departmentsData]);
+
+    useEffect(() => {
+        if (documentData) {
+            setDocuments(documentData);
+        }
+    }, [documentData]);
 
     useEffect(() => {
         const results = documents.filter((doc) =>
@@ -82,6 +91,10 @@ function TableDocument({ selectedEmployee }) {
             case 'docx':
                 return 'Word Document';
             case 'txt':
+                return 'Text File';
+            case 'vnd.openxmlformats-officedocument.wordprocessingml.document':
+                return 'Word Document';
+            case 'plain':
                 return 'Text File';
             default:
                 return 'Unknown';
@@ -130,10 +143,15 @@ function TableDocument({ selectedEmployee }) {
     };
 
     //Handle Delete Document
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm("Are you sure you want to delete the file from the list?")) {
-            const updatedDocuments = documents.filter(doc => doc.id !== id);
-            setDocuments(updatedDocuments);
+            try {
+                await deleteDocument(id).unwrap();
+    
+                alert('Document deleted successfully');
+              } catch (error) {    
+                console.error('Error:', error);
+              }
         }
     };
 
@@ -142,7 +160,7 @@ function TableDocument({ selectedEmployee }) {
         setEditingId(id);
         setEditedName(currentName);
     };
-    
+
     const handleCloseEdit = () => {
         setEditingId(null);
         setEditedName('');
@@ -208,7 +226,7 @@ function TableDocument({ selectedEmployee }) {
                 return doc;
             })
         );
-        
+
         handleCloseEdit();
     };
 
@@ -223,7 +241,16 @@ function TableDocument({ selectedEmployee }) {
     };
 
     //Handover notes
-    const confirmUploadWithNotes = () => {
+    const confirmUploadWithNotes = async (e) => {
+        e.preventDefault();
+        //uploadNewDoc is used as format to send the doc to the backend server
+        const uploadNewDoc = {
+            file: selectedFile,
+            uploader: selectedEmployee.name,
+            department: getDepartmentName(),
+            notes: handoverNotes || 'No notes provided',
+        };
+        //newDoc is used to add the uploaded doc to the list of the docs (absence of it will result in error in the filter function)
         const newDoc = {
             id: documents.length + 1,
             name: selectedFile.name,
@@ -235,11 +262,19 @@ function TableDocument({ selectedEmployee }) {
             notes: handoverNotes || 'No notes provided',
         };
 
-        setDocuments((prevDocs) => [...prevDocs, newDoc]);
+        uploadDocument(uploadNewDoc)
+            .unwrap()
+            .then(() => {
+                setDocuments((prevDocs) => [...prevDocs, newDoc]);
+                alert(`File "${selectedFile.name}" uploaded successfully with notes.`);
+            })
+            .catch((err) => {
+                console.error('Upload failed: ', err);
+            });
+
         setSelectedFile(null);
         setHandoverNotes('');
         setHandoverModalOpen(false);
-        alert(`File "${selectedFile.name}" uploaded successfully with notes.`);
     };
 
     //Display Handover Notes
@@ -367,7 +402,7 @@ function TableDocument({ selectedEmployee }) {
                                             doc.name
                                         )}
                                     </TableCell>
-                                    <TableCell>{doc.type}</TableCell>
+                                    <TableCell>{getFileType(doc.name)}</TableCell>
                                     <TableCell>{doc.size}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{doc.date}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
@@ -383,7 +418,7 @@ function TableDocument({ selectedEmployee }) {
                                                 <Edit sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
                                         )}
-                                        <IconButton onClick={() => handleDelete(doc.id)}>
+                                        <IconButton onClick={() => handleDelete(doc._id)}>
                                             <Delete sx={{ color: '#FF0000' }} />
                                         </IconButton>
                                     </TableCell>

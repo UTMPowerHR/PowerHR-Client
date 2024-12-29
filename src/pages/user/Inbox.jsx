@@ -24,10 +24,12 @@ import InboxIcon from '@mui/icons-material/Inbox';
 import NotesIcon from '@mui/icons-material/Notes';
 import { inboxData as inboxDocuments } from './inboxData';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
+import { useGetAllDocumentQuery, useDownloadDocumentMutation } from '@features/document/documentApiSlice';
 
 const Inbox = () => {
     const user = useSelector((state) => state.auth.user);
-    const [documents, setDocuments] = useState(inboxDocuments);
+    const { data: documentData } = useGetAllDocumentQuery();
+    const [documents, setDocuments] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredDocs, setFilteredDocs] = useState(documents);
     const [page, setPage] = useState(0);
@@ -36,6 +38,8 @@ const Inbox = () => {
     const [departmentOptions, setDepartmentOptions] = useState([]);
     const [handoverNotes, setHandoverNotes] = useState('');
     const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
+    const [triggerDownload, { isLoading }] = useDownloadDocumentMutation();
+
 
     // Fetch department data
     useEffect(() => {
@@ -43,6 +47,12 @@ const Inbox = () => {
             setDepartmentOptions(departmentsData.departments || []);
         }
     }, [departmentsData]);
+
+    useEffect(() => {
+        if (documentData) {
+            setDocuments(documentData);
+        }
+    }, [documentData]);
 
     const getDepartmentName = () => {
         if (!departmentOptions.length) return 'Loading...';
@@ -78,11 +88,57 @@ const Inbox = () => {
     };
 
     //Display Handover Notes
-    const handleDisplayHandoverNotes = (doc) => {
+    const handleDisplayHandoverNotes = (docId) => {
+        console.log(documents);
         setDisplayHandoverModalOpen(true);
-        const selectedDoc = filteredDocs.find((docs) => (docs.id === doc));
+        const selectedDoc = filteredDocs.find((doc) => (doc._id === docId));
         setHandoverNotes(selectedDoc.notes);
     };
+
+    const getFileType = (fileName) => {
+        const extension = fileName.toLowerCase();
+        switch (extension) {
+            case 'pdf':
+                return 'PDF';
+            case 'doc':
+            case 'docx':
+                return 'Word Document';
+            case 'txt':
+                return 'Text File';
+            case 'vnd.openxmlformats-officedocument.wordprocessingml.document':
+                return 'Word Document';
+            case 'plain':
+                return 'Text File';
+            default:
+                return 'Unknown';
+        }
+    };
+
+    const handleDownload = async (documentId, documentName) => {
+        try {
+            const blob = await triggerDownload(documentId).unwrap();
+    
+            // Handle the successful download
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = documentName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading the document:', error);
+    
+            if (error.status) {
+                console.error('HTTP Status:', error.status);
+            }
+            if (error.data) {
+                console.error('Error Details:', await error.data.text());
+            }
+        }
+    };    
+
 
     return (
         <Stack spacing={4}>
@@ -137,15 +193,15 @@ const Inbox = () => {
                                     .filter((doc) => doc.department === getDepartmentName())
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((doc, index) => (
-                                        <TableRow key={doc.id}>
+                                        <TableRow key={doc._id}>
                                             <TableCell>{index + 1 + page * rowsPerPage}.</TableCell>
                                             <TableCell>{doc.name}</TableCell>
-                                            <TableCell>{doc.type}</TableCell>
+                                            <TableCell>{getFileType(doc.type)}</TableCell>
                                             <TableCell>{doc.size}</TableCell>
                                             <TableCell>{doc.uploader}</TableCell>
                                             <TableCell>{doc.date}</TableCell>
                                             <TableCell sx={{ textAlign: 'center' }}>
-                                                <IconButton onClick={() => handleDisplayHandoverNotes(doc.id)}>
+                                                <IconButton onClick={() => handleDisplayHandoverNotes(doc._id)}>
                                                     <NotesIcon sx={{ color: '#e0e0e0' }} />
                                                 </IconButton>
                                             </TableCell>
@@ -153,7 +209,7 @@ const Inbox = () => {
                                                 <Button
                                                     variant="contained"
                                                     color="primary"
-                                                    onClick={() => alert(`Downloading: ${doc.name}`)}
+                                                    onClick={() => handleDownload(doc._id, doc.name)}
                                                 >
                                                     Download
                                                 </Button>
