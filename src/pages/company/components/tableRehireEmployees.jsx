@@ -41,6 +41,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import determineRole from './roleHierarchy';
 import { useGetAllEmploymentHistoryQuery } from '../../../features/employmentHistory/employmentHistoryApiSlice';
+import { useGetUserByIdQuery } from '../../../features/user/userApiSlice';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -48,9 +49,22 @@ dayjs.extend(isSameOrBefore);
 
 function TableRehireEmployees() {
     const user = useSelector((state) => state.auth.user);
-    const employees = useSelector((state) => state.company.employees);
+    // const employees = useSelector((state) => state.company.employees);
+    
     // const {data: employeesData} = useGetAllEmploymentHistoryQuery();
-    // const [employees, setEmployees] = useState([]);
+    const [employees, setEmployees] = useState([]);
+
+    // Get employment history data
+    const { data: employmentHistoryData } = useGetAllEmploymentHistoryQuery();
+
+     // Extract all unique user IDs from employment history
+     const userIds = employmentHistoryData ? [...new Set(employmentHistoryData.map(eh => eh.employee))] : [];
+
+     // Fetch user data for all users in employment history
+    const { data: userData } = useGetUserByIdQuery(userIds.join(','), {
+        skip: !userIds.length
+    });
+
     const [open, setOpen] = useState(false);
     const [rehiring, setRehiring] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -72,11 +86,29 @@ function TableRehireEmployees() {
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
     const availableRoles = [...new Set(employees.map(employee => employee.jobTitle))];
 
-    // useEffect(() => {
-    //     if (employeesData) {
-    //         setEmployees(employeesData);
-    //     }
-    // }, [employeesData]);
+    useEffect(() => {
+        if (employmentHistoryData && userData) {
+            // Combine employment history with user data
+            const combinedData = employmentHistoryData.map(history => {
+                const userInfo = userData.find(user => user._id === history.employee);
+                if (!userInfo) return null;
+                
+                return {
+                    ...history,
+                    firstName: userInfo.firstName,
+                    lastName: userInfo.lastName,
+                    email: userInfo.email,
+                    personalEmail: userInfo.personalEmail,
+                    gender: userInfo.gender,
+                    // Add any other user fields you need
+                };
+            }).filter(Boolean); // Remove null entries
+            
+            setEmployees(combinedData);
+        }
+    }, [employmentHistoryData, userData]);
+
+    console.log(employees);
 
     useEffect(() => {
         if (data) {
