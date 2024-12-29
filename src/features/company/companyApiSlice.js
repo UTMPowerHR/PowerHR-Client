@@ -90,6 +90,14 @@ export const companyApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        convertApplicantToEmployee: builder.mutation({
+            query: (data) => ({
+                url: '/company/' + data.company + '/employees/' + data._id + '/convert',
+                method: 'PUT',
+                body: { ...data },
+            }),
+            invalidatesTags: ['Company'],
+        }),
     }),
 });
 
@@ -106,4 +114,5 @@ export const {
     useCreateDepartmentMutation,
     useUpdateDepartmentMutation,
     useGetAnalyticTurnOverMutation,
+    useConvertApplicantToEmployeeMutation,
 } = companyApiSlice;

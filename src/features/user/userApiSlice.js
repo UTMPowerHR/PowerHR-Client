@@ -10,13 +10,16 @@ export const userApiSlice = apiSlice.injectEndpoints({
             }),
         }),
         uploadProfileImage: builder.mutation({
-            query: ({ formData, id }) => ({
+            query: ({ image, id }) => ({
                 url: '/users/upload/profile-picture/' + id,
                 method: 'POST',
-                body: formData,
-                formData: true,
+                body: { image, id }, // JSON payload with Base64-encoded image and user ID
+                headers: {
+                    'Content-Type': 'application/json', // Explicitly set Content-Type to JSON
+                },
             }),
         }),
+
     }),
 });
 

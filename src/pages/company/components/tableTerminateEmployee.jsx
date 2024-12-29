@@ -19,7 +19,6 @@ import {
     Button,
     DialogActions,
     DialogTitle,
-    Select,
     Menu,
     MenuItem,
     FormControlLabel,
@@ -36,10 +35,13 @@ import { useFormik } from 'formik';
 import {
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
-    useRegisterEmployeeMutation,
     useGetDepartmentsQuery,
+    useConvertApplicantToEmployeeMutation,
 } from '@features/company/companyApiSlice';
 import { setEmployees } from '@features/company/companySlice';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useDispatch, useSelector } from 'react-redux';
 import determineRole from './roleHierarchy';
 import { useNavigate } from 'react-router-dom';
@@ -59,15 +61,14 @@ function TableTerminateEmployees() {
     const [searchTerm, setSearchTerm] = useState('');
     const [requiredTerminations, setRequiredTerminations] = useState(1); // Initial count
     const [updateEmployee] = useUpdateEmployeeMutation();
-    const [terminationLetter, setTerminationLetter] = useState(null);
-    const [fileError, setFileError] = useState('');
-    const [noticePeriod, setNoticePeriod] = useState('Please Select'); // Default value
+    const [noticePeriod, setNoticePeriod] = useState(null);
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const [selectedRoles, setSelectedRoles] = useState([]);
     const [selectedDepartments, setSelectedDepartments] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
     const openMenu = Boolean(anchorEl);
     const navigate = useNavigate();
+    const [convertApplicantToEmployee] = useConvertApplicantToEmployeeMutation();
 
 
 
@@ -116,30 +117,27 @@ function TableTerminateEmployees() {
         setConfirmationOpen(false);
 
         try {
-            if (!terminationLetter) {
-                console.error('Termination letter is required');
-                return;
-            }
-
             // Determine termination date based on selected notice period
-            let terminationDate;
-            switch (noticePeriod) {
-                case '1_month':
-                    terminationDate = dayjs().add(1, 'month').format();
-                    break;
-                case '3_months':
-                    terminationDate = dayjs().add(3, 'month').format();
-                    break;
-                case '6_months':
-                    terminationDate = dayjs().add(6, 'month').format();
-                    break;
-                default:
-                    break;
+            let company = user.company;
+            let _id = selectedEmployee._id;
+            const updatedEmployee = {
+                ...selectedEmployee,
+                terminationDate: dayjs(noticePeriod).toISOString() // Convert to ISO string
+            };
+
+
+            if (dayjs(noticePeriod).isSame(dayjs(), 'day')) {
+                // If noticePeriod is today's date
+                console.log("terminate immediately");
+                const convertedEmployee = { company, _id };
+                await updateEmployee(updatedEmployee);
+                await convertApplicantToEmployee(convertedEmployee);
+            } else if (dayjs(noticePeriod).isAfter(dayjs(), 'day')) {
+                // If noticePeriod is a future date
+                await updateEmployee(updatedEmployee);
+            } else {
+                console.error('Notice period cannot be a past date.');
             }
-
-            const updatedEmployee = { ...selectedEmployee, terminationDate };
-
-            await updateEmployee(updatedEmployee); // Update employee in the database
 
             // Update local state after successful termination
             dispatch(setEmployees(
@@ -150,7 +148,6 @@ function TableTerminateEmployees() {
             setRequiredTerminations((prevCount) => Math.max(prevCount - 1, 0));
 
             setSelectedEmployee(null); // Reset selected employee
-            setTerminationLetter(null); // Clear file input
         } catch (error) {
             console.error('Failed to terminate employee:', error);
         }
@@ -179,6 +176,7 @@ function TableTerminateEmployees() {
         const email = employee.email.toLowerCase();
         const role = determineRole(employee.jobTitle);
         const hireDate = employee.hireDate && dayjs(employee.hireDate).isAfter(dayjs());
+        const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
 
         // Check if the employee matches the selected filters
         const roleMatches = selectedRoles.length === 0 || selectedRoles.includes(employee.jobTitle);
@@ -194,23 +192,11 @@ function TableTerminateEmployees() {
             role <= 1 &&
             !hireDate &&
             roleMatches &&
-            departmentMatches
+            departmentMatches &&
+            !isTerminated
         );
     });
 
-
-
-    // Handle file upload change
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file && file.size > 5 * 1024 * 1024) { // Limit file size to 5MB
-            setFileError('File size must be less than 5MB');
-            setTerminationLetter(null);
-        } else {
-            setFileError('');
-            setTerminationLetter(file);
-        }
-    };
 
     const handleRoleChange = (event) => {
         const { value, checked } = event.target;
@@ -239,11 +225,16 @@ function TableTerminateEmployees() {
         const clickedEmployee = employees.find((employee) => employee._id == employeeID);
         setSelectedEmployee(clickedEmployee);
     };
-    
+
     const handleMenuClose = () => {
         setAnchorEl(null);
         setSelectedEmployee(null);
-    }
+    };
+
+    const handleCancel = () => {
+        setNoticePeriod(null);
+        setConfirmationOpen(false);
+    };
 
 
     return (
@@ -330,8 +321,8 @@ function TableTerminateEmployees() {
                             </TableHead>
                             <TableBody>
                                 {filteredEmployees.map((employee) => {
-                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isBefore(dayjs(), 'day');
-                                    const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isSameOrAfter(dayjs(), 'day');
+                                    const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
+                                    const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
                                     // console.log(dayjs(employee.terminationDate).isBefore(dayjs()));
                                     console.log(isTerminated);
                                     console.log(isPendingTermination);
@@ -366,7 +357,7 @@ function TableTerminateEmployees() {
                                                 {(isPendingTermination ^ isTerminated) ? (
                                                     <>
                                                         <IconButton onClick={(event) => handleMenuClick(event, employee._id)}>
-                                                            <MoreHorizIcon  />
+                                                            <MoreHorizIcon />
                                                         </IconButton>
                                                         <Menu
                                                             id="basic-menu"
@@ -422,51 +413,43 @@ function TableTerminateEmployees() {
 
                 {/* Confirmation Dialog */}
                 <Dialog open={confirmationOpen} onClose={() => setConfirmationOpen(false)}>
-                    <DialogTitle>Confirm Termination</DialogTitle>
+                    <DialogTitle sx={{ fontSize: '18px !important', color: 'red', fontWeight: 'bold' }}>
+                        Confirm Termination
+                    </DialogTitle>
+
+
                     <DialogContent>
-                        <Typography sx={{ mb: 2 }}>
+                        <Typography sx={{ fontSize: '16px !important', mb: 2 }}>
                             Are you sure you want to terminate {selectedEmployee?.firstName} {selectedEmployee?.lastName}?
                         </Typography>
 
                         {/* File Upload Input */}
                         <Stack direction="column" spacing={2} sx={{ mt: 2 }}>
-                            <Typography variant="body2">Select Notice Period:</Typography>
-                            <Select
-                                value={noticePeriod}
-                                onChange={(e) => setNoticePeriod(e.target.value)}
-                                fullWidth
-                                displayEmpty
-                                variant="outlined"
-                            >
-                                <MenuItem value="Please Select">Please Select</MenuItem>
-                                <MenuItem value="1_month">1 Month</MenuItem>
-                                <MenuItem value="3_months">3 Months</MenuItem>
-                                <MenuItem value="6_months">6 Months</MenuItem>
-                            </Select>
+                            <Typography variant="body2" sx={{ fontSize: '13px !important'}}>Select Termination Date:</Typography>
 
-                            <Typography variant="body2">Please upload the Termination Letter:</Typography>
-                            <OutlinedInput
-                                type="file"
-                                onChange={handleFileChange}
-                                fullWidth
-                                inputProps={{ accept: '.pdf,.doc,.docx' }}
-                                error={!!fileError}
-                            />
-                            {fileError && (
-                                <Typography color="error" variant="body2">
-                                    {fileError}
-                                </Typography>
-                            )}
+                            <Stack direction="row" spacing={2} justifyContent="left">
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        fullWidth
+                                        label="Termination Date *"
+                                        name="terminationDate"
+                                        value={formik.values.terminationDate ? dayjs(formik.values.terminationDate) : null}
+                                        onChange={(newValue) => setNoticePeriod(newValue)}
+                                        required
+                                    />
+                                </LocalizationProvider>
+                            </Stack>
                         </Stack>
+
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setConfirmationOpen(false)} color="primary">
+                        <Button onClick={handleCancel} color="primary">
                             Cancel
                         </Button>
                         <Button
                             onClick={confirmTerminateEmployee}
                             color="error"
-                            disabled={!terminationLetter || noticePeriod == "Please Select" || !/\.(pdf|doc|docx)$/i.test(terminationLetter.name)}
+                            disabled={!noticePeriod || noticePeriod.isBefore(dayjs().subtract(1, "day"))}
                         >
                             Confirm
                         </Button>
