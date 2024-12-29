@@ -40,6 +40,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import determineRole from './roleHierarchy';
+import { useGetAllEmploymentHistoryQuery } from '../../../features/employmentHistory/employmentHistoryApiSlice';
+import { useGetUserByIdQuery } from '../../../features/user/userApiSlice';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -47,7 +49,22 @@ dayjs.extend(isSameOrBefore);
 
 function TableRehireEmployees() {
     const user = useSelector((state) => state.auth.user);
-    const employees = useSelector((state) => state.company.employees);
+    // const employees = useSelector((state) => state.company.employees);
+    
+    // const {data: employeesData} = useGetAllEmploymentHistoryQuery();
+    const [employees, setEmployees] = useState([]);
+
+    // Get employment history data
+    const { data: employmentHistoryData } = useGetAllEmploymentHistoryQuery();
+
+     // Extract all unique user IDs from employment history
+     const userIds = employmentHistoryData ? [...new Set(employmentHistoryData.map(eh => eh.employee))] : [];
+
+     // Fetch user data for all users in employment history
+    const { data: userData } = useGetUserByIdQuery(userIds.join(','), {
+        skip: !userIds.length
+    });
+
     const [open, setOpen] = useState(false);
     const [rehiring, setRehiring] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -70,11 +87,36 @@ function TableRehireEmployees() {
     const availableRoles = [...new Set(employees.map(employee => employee.jobTitle))];
 
     useEffect(() => {
-        if (isSuccess) {
+        if (employmentHistoryData && userData) {
+            // Combine employment history with user data
+            const combinedData = employmentHistoryData.map(history => {
+                const userInfo = userData.find(user => user._id === history.employee);
+                if (!userInfo) return null;
+                
+                return {
+                    ...history,
+                    firstName: userInfo.firstName,
+                    lastName: userInfo.lastName,
+                    email: userInfo.email,
+                    personalEmail: userInfo.personalEmail,
+                    gender: userInfo.gender,
+                    // Add any other user fields you need
+                };
+            }).filter(Boolean); // Remove null entries
+            
+            setEmployees(combinedData);
+        }
+    }, [employmentHistoryData, userData]);
+
+    console.log(employees);
+
+    useEffect(() => {
+        if (data) {
             dispatch(setEmployees(data.employees));
         }
-    }, [data, isSuccess, dispatch]);
+    }, [employees, data, dispatch]);
 
+    // console.log(employeesData);
     const handleRehire = async () => {
         if (selectedEmployee) {
             setOpen(false);
@@ -89,7 +131,7 @@ function TableRehireEmployees() {
                     hireDate: formik.values.hireDate,
                     terminationDate: null,
                 }).unwrap();
-    
+
                 dispatch(setEmployees(data.employees));
                 formik.resetForm();
             } catch (error) {
@@ -294,52 +336,52 @@ function TableRehireEmployees() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                            {filteredEmployees
-    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-    .map((employee) => {
-        // Check if employee is scheduled to be hired
-        const isScheduledForHire = employee.hireDate &&
-            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
+                                {filteredEmployees
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((employee) => {
+                                        // Check if employee is scheduled to be hired
+                                        const isScheduledForHire = employee.hireDate &&
+                                            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
 
-        // Check if the termination date is in the future
-        const isTerminationFutureOrToday = employee.terminationDate &&
-            dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
+                                        // Check if the termination date is in the future
+                                        const isTerminationFutureOrToday = employee.terminationDate &&
+                                            dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
 
-        return (
-            <TableRow key={employee._id}>
-                <TableCell padding="checkbox"><Checkbox /></TableCell>
-                <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                <TableCell>{employee.email}</TableCell>
-                <TableCell>{employee.jobTitle}</TableCell>
-                <TableCell>
-                    {departmentsData &&
-                        departmentsData.departments
-                            .filter(department => department._id === employee.department)
-                            .map(department => department.name)}
-                </TableCell>
-                <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
-                <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
-                <TableCell align="right">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleOpenDialog(employee)}
-                        disabled={
-                            selectedEmployee && selectedEmployee._id === employee._id && rehiring || 
-                            isScheduledForHire || 
-                            isTerminationFutureOrToday
-                        }
-                    >
-                        {selectedEmployee && selectedEmployee._id === employee._id && rehiring 
-                            ? 'Rehiring' 
-                            : isScheduledForHire 
-                            ? 'Hiring' 
-                            : 'Rehire'}
-                    </Button>
-                </TableCell>
-            </TableRow>
-        );
-    })}
+                                        return (
+                                            <TableRow key={employee._id}>
+                                                <TableCell padding="checkbox"><Checkbox /></TableCell>
+                                                <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
+                                                <TableCell>{employee.email}</TableCell>
+                                                <TableCell>{employee.jobTitle}</TableCell>
+                                                <TableCell>
+                                                    {departmentsData &&
+                                                        departmentsData.departments
+                                                            .filter(department => department._id === employee.department)
+                                                            .map(department => department.name)}
+                                                </TableCell>
+                                                <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
+                                                <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
+                                                <TableCell align="right">
+                                                    <Button
+                                                        variant="contained"
+                                                        color="primary"
+                                                        onClick={() => handleOpenDialog(employee)}
+                                                        disabled={
+                                                            selectedEmployee && selectedEmployee._id === employee._id && rehiring ||
+                                                            isScheduledForHire ||
+                                                            isTerminationFutureOrToday
+                                                        }
+                                                    >
+                                                        {selectedEmployee && selectedEmployee._id === employee._id && rehiring
+                                                            ? 'Rehiring'
+                                                            : isScheduledForHire
+                                                                ? 'Hiring'
+                                                                : 'Rehire'}
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                             </TableBody>
                         </Table>
                     </Scrollbar>
