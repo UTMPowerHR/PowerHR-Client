@@ -29,7 +29,7 @@ import dayjs from 'dayjs';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
 // import { documentData } from './documentData';
 import _ from 'lodash';
-import { useUploadDocumentMutation, useGetAllDocumentQuery } from '@features/document/documentApiSlice';
+import { useUploadDocumentMutation, useGetAllDocumentQuery, useDeleteDocumentMutation } from '@features/document/documentApiSlice';
 
 dayjs.extend(utc);
 
@@ -50,6 +50,7 @@ function TableDocument({ selectedEmployee }) {
     const [handoverModalOpen, setHandoverModalOpen] = useState(false);
     const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
     const [uploadDocument] = useUploadDocumentMutation();
+    const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation();
 
     useEffect(() => {
         if (departmentsData) {
@@ -59,7 +60,6 @@ function TableDocument({ selectedEmployee }) {
 
     useEffect(() => {
         if (documentData) {
-            console.log(documentData);
             setDocuments(documentData);
         }
     }, [documentData]);
@@ -143,10 +143,15 @@ function TableDocument({ selectedEmployee }) {
     };
 
     //Handle Delete Document
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm("Are you sure you want to delete the file from the list?")) {
-            const updatedDocuments = documents.filter(doc => doc.id !== id);
-            setDocuments(updatedDocuments);
+            try {
+                await deleteDocument(id).unwrap();
+    
+                alert('Document deleted successfully');
+              } catch (error) {    
+                console.error('Error:', error);
+              }
         }
     };
 
@@ -413,7 +418,7 @@ function TableDocument({ selectedEmployee }) {
                                                 <Edit sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
                                         )}
-                                        <IconButton onClick={() => handleDelete(doc.id)}>
+                                        <IconButton onClick={() => handleDelete(doc._id)}>
                                             <Delete sx={{ color: '#FF0000' }} />
                                         </IconButton>
                                     </TableCell>
