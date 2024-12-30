@@ -20,7 +20,15 @@ export const userApiSlice = apiSlice.injectEndpoints({
             }),
         }),
 
+        getUserById: builder.query({
+            query: (role, id) => ({
+                url: '/users/' + role + "/" + id,
+                method: 'GET',
+            }),
+            providesTags: ['User'],
+        }),
+
     }),
 });
 
-export const { useUpdateUserMutation, useUploadProfileImageMutation } = userApiSlice;
+export const { useUpdateUserMutation, useUploadProfileImageMutation, useGetUserByIdQuery} = userApiSlice;
