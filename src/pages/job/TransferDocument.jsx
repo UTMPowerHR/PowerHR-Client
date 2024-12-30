@@ -27,13 +27,14 @@ import { Delete, Edit, Save } from '@mui/icons-material';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
-import { documentData } from './documentData';
+import { useUploadDocumentMutation, useGetAllDocumentQuery, useDeleteDocumentMutation, useUpdateDocumentMutation, } from '@features/document/documentApiSlice';
 
 dayjs.extend(utc);
 
 function TableDocument() {
     const user = useSelector((state) => state.auth.user);
-    const [documents, setDocuments] = useState(documentData);
+    const { data: documentData } = useGetAllDocumentQuery();
+    const [documents, setDocuments] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredDocs, setFilteredDocs] = useState(documents);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -46,12 +47,21 @@ function TableDocument() {
     const [handoverNotes, setHandoverNotes] = useState('');
     const [handoverModalOpen, setHandoverModalOpen] = useState(false);
     const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
+    const [uploadDocument] = useUploadDocumentMutation();
+    const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation();
+    const [editDocument, { isLoading: isEditing }] = useUpdateDocumentMutation();
 
     useEffect(() => {
         if (departmentsData) {
             setDepartmentOptions(departmentsData.departments);
         }
     }, [departmentsData]);
+
+    useEffect(() => {
+        if (documentData) {
+            setDocuments(documentData);
+        }
+    }, [documentData]);
 
     const getUserFullName = () => {
         return user.firstName + " " + user.lastName;
@@ -84,6 +94,10 @@ function TableDocument() {
             case 'docx':
                 return 'Word Document';
             case 'txt':
+                return 'Text File';
+            case 'vnd.openxmlformats-officedocument.wordprocessingml.document':
+                return 'Word Document';
+            case 'plain':
                 return 'Text File';
             default:
                 return 'Unknown';
@@ -132,10 +146,15 @@ function TableDocument() {
     };
 
     //Handle Delete Document
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm("Are you sure you want to delete the file from the list?")) {
-            const updatedDocuments = documents.filter(doc => doc.id !== id);
-            setDocuments(updatedDocuments);
+            try {
+                await deleteDocument(id).unwrap();
+    
+                alert('Document deleted successfully');
+              } catch (error) {    
+                console.error('Error:', error);
+              }
         }
     };
 
@@ -151,7 +170,7 @@ function TableDocument() {
     };
 
     const getFileNameById = (id) => {
-        const file = documents.find(file => file.id === id);
+        const file = documents.find(file => file._id === id);
         return file ? file.name : null;
     };
 
@@ -162,7 +181,7 @@ function TableDocument() {
     };
 
     const isNameContainSpecialChar = (name) => {
-        var format = /[ `!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/; //regEx for special characters
+        var format = /[`!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/; //regEx for special characters
         return format.test(name);
     };
 
@@ -183,8 +202,8 @@ function TableDocument() {
             handleCloseEdit();
             return;
         }
-        else if (editedName.length > 30) {
-            alert("Invalid Filename. Filename must not exceed 30 characters.");
+        else if (getBaseName(editedName).length > 50) {
+            alert("Invalid Filename. Filename must not exceed 50 characters.");
             handleCloseEdit();
             return;
         }
@@ -196,7 +215,7 @@ function TableDocument() {
 
         setDocuments((prevDocs) =>
             prevDocs.map((doc) => {
-                if (doc.id === id) {
+                if (doc._id === id) {
                     // Extract the original extension from the document name
                     const originalExtension = doc.name.substring(doc.name.lastIndexOf('.'));
 
@@ -204,8 +223,10 @@ function TableDocument() {
 
                     // Combine the base name with the original extension
                     const sanitizedName = baseName + originalExtension;
-
-                    return { ...doc, name: sanitizedName };
+                    const newDoc = { ...doc, name: sanitizedName };
+                    console.log(newDoc);
+                    editDocument(newDoc);
+                    return newDoc;
                 }
                 return doc;
             })
@@ -225,7 +246,17 @@ function TableDocument() {
     };
 
     //Handover notes
-    const confirmUploadWithNotes = () => {
+    const confirmUploadWithNotes = async (e) => {
+        e.preventDefault();
+        //uploadNewDoc is used as format to send the doc to the backend server
+        const uploadNewDoc = {
+            file: selectedFile,
+            uploader: getUserFullName(),
+            department: getDepartmentName(),
+            notes: handoverNotes || 'No notes provided',
+        };
+
+        //newDoc is used to add the uploaded doc to the list of the docs (absence of it will result in error in the filter function)
         const newDoc = {
             id: documents.length + 1,
             name: selectedFile.name,
@@ -234,20 +265,28 @@ function TableDocument() {
             uploader: getUserFullName(),
             date: new Date().toISOString().split('T')[0],
             department: getDepartmentName(),
-            handoverNotes: handoverNotes || 'No notes provided',
+            notes: handoverNotes || 'No notes provided',
         };
 
-        setDocuments((prevDocs) => [...prevDocs, newDoc]);
+        uploadDocument(uploadNewDoc)
+        .unwrap()
+        .then(() => {
+            setDocuments((prevDocs) => [...prevDocs, newDoc]);
+            alert(`File "${selectedFile.name}" uploaded successfully with notes.`);
+        })
+        .catch((err) => {
+            console.error('Upload failed: ', err);
+        });
+
         setSelectedFile(null);
         setHandoverNotes('');
         setHandoverModalOpen(false);
-        alert(`File "${selectedFile.name}" uploaded successfully with notes.`);
     };
 
     //Display Handover Notes
     const handleDisplayHandoverNotes = (doc) => {
         setDisplayHandoverModalOpen(true);
-        const selectedDoc = documents.find((docs) => (docs.id === doc));
+        const selectedDoc = documents.find((docs) => (docs._id === doc));
         setHandoverNotes(selectedDoc.notes);
     };
 
@@ -356,10 +395,10 @@ function TableDocument() {
                             {filteredDocs
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((doc, index) => (
-                                    <TableRow key={doc.id}>
+                                    <TableRow key={doc._id}>
                                         <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{index + 1 + page * rowsPerPage}.</TableCell>
                                         <TableCell>
-                                            {editingId === doc.id ? (
+                                            {editingId === doc._id ? (
                                                 <TextField
                                                     value={getBaseName(editedName)}
                                                     onChange={(e) => setEditedName(e.target.value)}
@@ -371,23 +410,23 @@ function TableDocument() {
                                                 doc.name
                                             )}
                                         </TableCell>
-                                        <TableCell>{doc.type}</TableCell>
+                                        <TableCell>{getFileType(doc.name)}</TableCell>
                                         <TableCell>{doc.size}</TableCell>
                                         <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{doc.date}</TableCell>
                                         <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
-                                            <IconButton onClick={() => handleDisplayHandoverNotes(doc.id)}>
+                                            <IconButton onClick={() => handleDisplayHandoverNotes(doc._id)}>
                                                 <NotesIcon sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
-                                            {editingId === doc.id ? (
-                                                <IconButton onClick={() => handleSave(doc.id)}>
+                                            {editingId === doc._id ? (
+                                                <IconButton onClick={() => handleSave(doc._id)}>
                                                     <Save sx={{ color: '#e0e0e0' }} />
                                                 </IconButton>
                                             ) : (
-                                                <IconButton onClick={() => handleEdit(doc.id, doc.name)}>
+                                                <IconButton onClick={() => handleEdit(doc._id, doc.name)}>
                                                     <Edit sx={{ color: '#e0e0e0' }} />
                                                 </IconButton>
                                             )}
-                                            <IconButton onClick={() => handleDelete(doc.id)}>
+                                            <IconButton onClick={() => handleDelete(doc._id)}>
                                                 <Delete sx={{ color: '#FF0000' }} />
                                             </IconButton>
                                         </TableCell>

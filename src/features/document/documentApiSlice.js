@@ -30,21 +30,30 @@ export const documentApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
                 responseHandler: (response) => response.blob(), // Expect binary data
             }),
-        }),    
+        }),
         deleteDocument: builder.mutation({
             query: (id) => ({
-              url: `/document/` + id,
-              method: 'DELETE',
+                url: `/document/` + id,
+                method: 'DELETE',
             }),
             // Invalidate the Document tag to refetch the documents list after deletion
             invalidatesTags: ['Document'],
-          }),    
+        }),
+        updateDocument: builder.mutation({
+            query: (data) => ({
+                url: '/document/' + data._id,
+                method: 'PUT',
+                body: { ...data },
+            }),
+            invalidatesTags: ['Document'],
+        }),
     }),
 });
 
-export const { 
+export const {
     useUploadDocumentMutation,
     useGetAllDocumentQuery,
     useDownloadDocumentMutation,
     useDeleteDocumentMutation,
+    useUpdateDocumentMutation,
 } = documentApiSlice;
