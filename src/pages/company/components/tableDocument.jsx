@@ -27,9 +27,8 @@ import { Delete, Edit, Save } from '@mui/icons-material';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { useGetDepartmentsQuery } from '@features/company/companyApiSlice';
-// import { documentData } from './documentData';
 import _ from 'lodash';
-import { useUploadDocumentMutation, useGetAllDocumentQuery, useDeleteDocumentMutation } from '@features/document/documentApiSlice';
+import { useUploadDocumentMutation, useGetAllDocumentQuery, useDeleteDocumentMutation, useUpdateDocumentMutation, } from '@features/document/documentApiSlice';
 
 dayjs.extend(utc);
 
@@ -51,6 +50,7 @@ function TableDocument({ selectedEmployee }) {
     const [displayHandoverModalOpen, setDisplayHandoverModalOpen] = useState(false);
     const [uploadDocument] = useUploadDocumentMutation();
     const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation();
+    const [editDocument, { isLoading: isEditing }] = useUpdateDocumentMutation();
 
     useEffect(() => {
         if (departmentsData) {
@@ -167,7 +167,7 @@ function TableDocument({ selectedEmployee }) {
     };
 
     const getFileNameById = (id) => {
-        const file = documents.find(file => file.id === id);
+        const file = documents.find(file => file._id === id);
         return file ? file.name : null;
     };
 
@@ -178,7 +178,7 @@ function TableDocument({ selectedEmployee }) {
     };
 
     const isNameContainSpecialChar = (name) => {
-        var format = /[ `!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/; //regEx for special characters
+        var format = /[`!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/; //regEx for special characters
         return format.test(name);
     };
 
@@ -199,8 +199,8 @@ function TableDocument({ selectedEmployee }) {
             handleCloseEdit();
             return;
         }
-        else if (getBaseName(editedName).length > 30) {
-            alert("Invalid Filename. Filename must not exceed 30 characters.");
+        else if (getBaseName(editedName).length > 50) {
+            alert("Invalid Filename. Filename must not exceed 50 characters.");
             handleCloseEdit();
             return;
         }
@@ -212,7 +212,7 @@ function TableDocument({ selectedEmployee }) {
 
         setDocuments((prevDocs) =>
             prevDocs.map((doc) => {
-                if (doc.id === id) {
+                if (doc._id === id) {
                     // Extract the original extension from the document name
                     const originalExtension = doc.name.substring(doc.name.lastIndexOf('.'));
 
@@ -220,13 +220,14 @@ function TableDocument({ selectedEmployee }) {
 
                     // Combine the base name with the original extension
                     const sanitizedName = baseName + originalExtension;
-
-                    return { ...doc, name: sanitizedName };
+                    const newDoc = { ...doc, name: sanitizedName };
+                    editDocument(newDoc);
+                    return newDoc;
                 }
                 return doc;
             })
         );
-
+        
         handleCloseEdit();
     };
 
@@ -280,7 +281,7 @@ function TableDocument({ selectedEmployee }) {
     //Display Handover Notes
     const handleDisplayHandoverNotes = (doc) => {
         setDisplayHandoverModalOpen(true);
-        const selectedDoc = documents.find((docs) => (docs.id === doc));
+        const selectedDoc = documents.find((docs) => (docs._id === doc));
         setHandoverNotes(selectedDoc.notes);
     };
 
@@ -387,10 +388,10 @@ function TableDocument({ selectedEmployee }) {
                         </TableHead>
                         <TableBody>
                             {filteredDocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((doc, index) => (
-                                <TableRow key={doc.id}>
+                                <TableRow key={doc._id}>
                                     <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{index + 1 + page * rowsPerPage}.</TableCell>
                                     <TableCell>
-                                        {editingId === doc.id ? (
+                                        {editingId === doc._id ? (
                                             <TextField
                                                 value={getBaseName(editedName)}
                                                 onChange={(e) => setEditedName(e.target.value)}
@@ -406,15 +407,15 @@ function TableDocument({ selectedEmployee }) {
                                     <TableCell>{doc.size}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>{doc.date}</TableCell>
                                     <TableCell sx={{ color: '#e0e0e0', textAlign: 'center' }}>
-                                        <IconButton onClick={() => handleDisplayHandoverNotes(doc.id)}>
+                                        <IconButton onClick={() => handleDisplayHandoverNotes(doc._id)}>
                                             <NotesIcon sx={{ color: '#e0e0e0' }} />
                                         </IconButton>
-                                        {editingId === doc.id ? (
-                                            <IconButton onClick={() => handleSave(doc.id)}>
+                                        {editingId === doc._id ? (
+                                            <IconButton onClick={() => handleSave(doc._id)}>
                                                 <Save sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
                                         ) : (
-                                            <IconButton onClick={() => handleEdit(doc.id, doc.name)}>
+                                            <IconButton onClick={() => handleEdit(doc._id, doc.name)}>
                                                 <Edit sx={{ color: '#e0e0e0' }} />
                                             </IconButton>
                                         )}
