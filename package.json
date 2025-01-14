@@ -13,6 +13,7 @@
         "prepare": "husky install"
     },
     "dependencies": {
+        "@emailjs/browser": "^4.4.1",
         "@emotion/react": "^11.11.1",
         "@emotion/styled": "^11.11.0",
         "@fontsource/roboto": "^5.0.8",
@@ -21,10 +22,13 @@
         "@mui/material": "^5.14.5",
         "@mui/x-charts": "^7.9.0",
         "@mui/x-date-pickers": "^6.18.0",
+        "@react-pdf/renderer": "^4.1.6",
         "@reduxjs/toolkit": "^1.9.5",
         "@untitled-ui/icons-react": "^0.1.1",
+        "client": "file:",
         "date-fns": "^2.30.0",
         "dayjs": "^1.11.10",
+        "emailjs-com": "^3.2.0",
         "formik": "^2.4.3",
         "html-react-parser": "^5.1.10",
         "lodash": "^4.17.21",

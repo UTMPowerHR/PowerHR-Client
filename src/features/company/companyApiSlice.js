@@ -90,6 +90,21 @@ export const companyApiSlice = apiSlice.injectEndpoints({
                 method: 'GET',
             }),
         }),
+        convertApplicantToEmployee: builder.mutation({
+            query: (data) => ({
+                url: '/company/' + data.company + '/employees/' + data._id + '/convert',
+                method: 'PUT',
+                body: { ...data },
+            }),
+            invalidatesTags: ['Company'],
+        }),
+        deleteEmploymentHistory: builder.mutation({
+            query: (id) => ({
+                url: `/company/employmenthistory/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Company', 'EmploymentHistory'],
+        }),
     }),
 });
 
@@ -106,4 +121,6 @@ export const {
     useCreateDepartmentMutation,
     useUpdateDepartmentMutation,
     useGetAnalyticTurnOverMutation,
+    useConvertApplicantToEmployeeMutation,
+    useDeleteEmploymentHistoryMutation,
 } = companyApiSlice;

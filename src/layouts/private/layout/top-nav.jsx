@@ -5,6 +5,7 @@ import { alpha } from '@mui/material/styles';
 import { AccountButton } from '../account-button';
 import { NotificationsButton } from '../notifications-button';
 import { SearchButton } from '../search-button';
+import { InboxButton } from '../inbox-button';
 
 const TOP_NAV_HEIGHT = 64;
 const SIDE_NAV_WIDTH = 280;
@@ -52,6 +53,7 @@ export const TopNav = (props) => {
                     <SearchButton />
                 </Stack>
                 <Stack alignItems="center" direction="row" spacing={2}>
+                    <InboxButton />
                     <NotificationsButton />
                     <AccountButton />
                 </Stack>
