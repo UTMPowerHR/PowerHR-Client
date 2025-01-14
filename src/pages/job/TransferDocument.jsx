@@ -150,7 +150,7 @@ function TableDocument() {
         if (confirm("Are you sure you want to delete the file from the list?")) {
             try {
                 await deleteDocument(id).unwrap();
-    
+                setDocuments((prevDocuments) => prevDocuments.filter((doc) => doc._id !== id));
                 alert('Document deleted successfully');
               } catch (error) {    
                 console.error('Error:', error);
@@ -281,6 +281,7 @@ function TableDocument() {
         setSelectedFile(null);
         setHandoverNotes('');
         setHandoverModalOpen(false);
+        window.location.reload();
     };
 
     //Display Handover Notes

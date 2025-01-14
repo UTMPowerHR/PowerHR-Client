@@ -147,7 +147,7 @@ function TableDocument({ selectedEmployee }) {
         if (confirm("Are you sure you want to delete the file from the list?")) {
             try {
                 await deleteDocument(id).unwrap();
-    
+                setDocuments((prevDocuments) => prevDocuments.filter((doc) => doc._id !== id));
                 alert('Document deleted successfully');
               } catch (error) {    
                 console.error('Error:', error);
@@ -217,10 +217,10 @@ function TableDocument({ selectedEmployee }) {
                     const originalExtension = doc.name.substring(doc.name.lastIndexOf('.'));
 
                     const baseName = getBaseName(editedName);
-
                     // Combine the base name with the original extension
                     const sanitizedName = baseName + originalExtension;
                     const newDoc = { ...doc, name: sanitizedName };
+                    console.log(newDoc);
                     editDocument(newDoc);
                     return newDoc;
                 }
@@ -253,7 +253,7 @@ function TableDocument({ selectedEmployee }) {
         };
         //newDoc is used to add the uploaded doc to the list of the docs (absence of it will result in error in the filter function)
         const newDoc = {
-            id: documents.length + 1,
+            _id: documents.length + 1,
             name: selectedFile.name,
             type: getFileType(selectedFile.name),
             size: formatFileSize(selectedFile.size),
@@ -276,6 +276,7 @@ function TableDocument({ selectedEmployee }) {
         setSelectedFile(null);
         setHandoverNotes('');
         setHandoverModalOpen(false);
+        window.location.reload();
     };
 
     //Display Handover Notes
