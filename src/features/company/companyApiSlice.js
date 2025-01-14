@@ -98,6 +98,13 @@ export const companyApiSlice = apiSlice.injectEndpoints({
             }),
             invalidatesTags: ['Company'],
         }),
+        deleteEmploymentHistory: builder.mutation({
+            query: (id) => ({
+                url: `/company/employmenthistory/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Company', 'EmploymentHistory'],
+        }),
     }),
 });
 
@@ -115,4 +122,5 @@ export const {
     useUpdateDepartmentMutation,
     useGetAnalyticTurnOverMutation,
     useConvertApplicantToEmployeeMutation,
+    useDeleteEmploymentHistoryMutation,
 } = companyApiSlice;

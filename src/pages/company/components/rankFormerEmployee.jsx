@@ -39,8 +39,12 @@ import {
     useUpdateEmployeeMutation,
     useGetDepartmentsQuery,
 } from '@features/company/companyApiSlice';
+import { useGetAllEmploymentHistoryQuery } from '../../../features/employmentHistory/employmentHistoryApiSlice';
 import { setEmployees } from '@features/company/companySlice';
 import { useDispatch, useSelector } from 'react-redux';
+import { filter } from 'lodash';
+
+dayjs.extend(isSameOrBefore);
 
 // Helper function to calculate education level score
 const calculateEducationScore = (resume) => {
@@ -152,7 +156,7 @@ function performTOPSISAnalysis(employees, departmentsData, selectedRole, selecte
 
     // Step 1: Filter Employees
     let filteredEmployees = employees.filter(emp =>
-        emp.terminationDate && dayjs(emp.terminationDate).isBefore(dayjs(), 'day')
+        emp.terminationDate && dayjs(emp.terminationDate).isSameOrBefore(dayjs(), 'day')
     );
 
     // Additional filtering by role and department
@@ -166,7 +170,6 @@ function performTOPSISAnalysis(employees, departmentsData, selectedRole, selecte
                 .find(dept => dept.name === selectedDepartment)?._id === emp.department
         );
     }
-
     // TOPSIS Criteria Definition with new weights
     // Initial criteria definition
 
@@ -321,7 +324,8 @@ function RankedEmployeesTable() {
         // You can add more criteria here if needed
     ];
     const user = useSelector((state) => state.auth.user);
-    const employees = useSelector((state) => state.company.employees);
+    const { data: employmentHistoryData } = useGetAllEmploymentHistoryQuery();
+    const [employees, setEmployees] = useState([]);
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const { data: allResumes, isLoading: isResumesLoading } = useGetAllResumesQuery(user.company);
     const availableRoles = [...new Set(employees.map((employee) => employee.jobTitle))];
@@ -339,6 +343,45 @@ function RankedEmployeesTable() {
     const [rankedEmployees, setRankedEmployees] = useState([]);
     const [selectedRole, setSelectedRole] = useState('All Roles');
     const [selectedDepartment, setSelectedDepartment] = useState('');
+
+
+    useEffect(() => {
+        if (employmentHistoryData) {
+            const newEmployee = employmentHistoryData.map((emp) => {
+                return {
+                    ...emp._id,
+                    jobTitle: emp.jobTitle,
+                    terminationDate: emp.terminationDate,
+                    hireDate: emp.hireDate,
+                    deptName: emp.department.name,
+                    departmentId: emp.department._id,
+                    salary: emp.salary,
+                    personalEmail: emp.personalEmail,
+                    company: emp.company,
+                    employmentHistoryId: emp._id,
+                }
+            });
+            setEmployees(newEmployee);
+        }
+    }, [employees, employmentHistoryData]);
+
+    const filteredEmployees = employees.filter((employee) => {
+
+        // Check if employee is terminated (terminationDate is in the past or today)
+        const isTerminated = employee.terminationDate &&
+            dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
+
+        // Check if employee is scheduled to be hired (hireDate is in the future)
+        const isScheduledForHire = employee.hireDate &&
+            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
+
+
+
+        return (
+            employee._id !== user._id &&
+            (isTerminated || isScheduledForHire) // Show only terminated or scheduled employees
+        );
+    });
 
 
     // Handlers for criteria modification
@@ -438,21 +481,18 @@ function RankedEmployeesTable() {
             setRankedEmployees(rankedEmployeeList.slice(0, 10));
         } catch (error) {
             // Handle weight sum error
-            alert(error.message);
         }
     };
 
     const handleRoleChange = (event) => {
         setSelectedRole(event.target.value);
     };
-
     // Auto-apply filters on data change
     useEffect(() => {
         if (!isResumesLoading) {
             handleApplyFilter();
         }
     }, [employees, departmentsData, allResumes, isResumesLoading]);
-
     // Match resumes with ranked employees
     const rankedEmployeesWithResumes = useMemo(() => {
         if (!rankedEmployees || !allResumes) return [];
@@ -593,7 +633,7 @@ function RankedEmployeesTable() {
                                 <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
                                 <TableCell>
                                     {departmentsData?.departments
-                                        .find(dept => dept._id === employee.department)?.name || 'N/A'}
+                                        .find(dept => dept._id === employee.departmentId)?.name || 'N/A'}
                                 </TableCell>
                                 <TableCell align="right">
                                     {(employee.topisisScore * 100).toFixed(2)}%
