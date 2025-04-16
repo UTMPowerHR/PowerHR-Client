@@ -29,15 +29,31 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
-    useGetApplicationFilterByPostingIdMutation,
-    useGetListApplicationsByCompanyIdQuery,
-} from '../../features/application/applicationApiSlice';
+    useGetPostingListByCompanyIdQuery,
+    useFilterApplicationsMutation,
+    useGetApplicationsByPostingQuery,
+    useGetAllApplicationsByCompanyQuery,
+} from '@features/job/jobApiSlice';
 
 export default function Filter() {
     const companyId = useSelector((state) => state.auth.user.company);
-    const { data: applications, isLoading } = useGetListApplicationsByCompanyIdQuery(companyId);
-    const [getApplications, { data: filteredApplications, isLoading: isFiltering }] =
-        useGetApplicationFilterByPostingIdMutation();
+    const postId = '6675b2135d71ba270c232ff8';
+    const { data: postingList, isLoading: isPostingLoading } = useGetPostingListByCompanyIdQuery(companyId);
+    const { data: applicantList, isLoading: isApplicantLoading } = useGetApplicationsByPostingQuery(postId);
+    console.log('postingList', postingList);
+    console.log('applicantList', applicantList);
+
+    // useEffect(() => {
+    //     if (postingList.length > 0) {
+    //         postingList.forEach((posting) => {
+    //             const postId = posting._id;
+    //             const { data: applicantList } = useGetApplicationsByPostingQuery(postId); // Replace with your logic
+    //             console.log('applicantList', applicantList);
+    //         });
+    //     }
+    // }, [postingList]);
+    const [filterApplications, { data: filteredApplications, isPostingLoading: isFiltering }] =
+        useFilterApplicationsMutation({});
 
     const [newPosting, setNewPosting] = useState(false);
     const [selectedJobTitle, setSelectedJobTitle] = useState('');
@@ -58,33 +74,51 @@ export default function Filter() {
         },
     });
 
+    // Fetch initial applications when postingList is loaded
     useEffect(() => {
-        if (applications && applications.postingList.length > 0) {
-            getApplications({ postId: applications.postingList[0]._id, requirements: null });
-            setSelectedJobTitle(applications.postingList[0]._id);
+        if (postingList && postingList.length > 0) {
+            filterApplications({
+                postingId: postingList[0]._id,
+                bodyRequirements: {}, // Pass an empty object instead of null
+            });
+            console.log('1', postingList[0]._id);
+            setSelectedJobTitle(postingList[0]._id); // Set to _id, not job.title
+            console.log('2', selectedJobTitle);
             setNewPosting(true);
+            console.log(newPosting);
+        } else {
+            console.error('No postings found for the company');
         }
-    }, [applications, getApplications]);
+    }, [postingList, filterApplications]);
 
+    // Update requirements when filteredApplications is loaded
     useEffect(() => {
         if (filteredApplications && newPosting) {
             setRequirements(filteredApplications.requirements);
             setNewPosting(false);
         }
+    }, [filteredApplications, newPosting]);
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filteredApplications]);
-
+    // Filter applications whenever requirements or selectedJobTitle changes
     useEffect(() => {
         if (!newPosting) {
-            getApplications({ postId: selectedJobTitle, requirements });
+            filterApplications({
+                postingId: selectedJobTitle,
+                bodyRequirements: requirements, // Use the current requirements state
+            });
+            console.log('hehe', selectedJobTitle, 'haha', requirements);
+        } else {
+            console.error('Invalid or missing job title');
         }
+    }, [requirements, selectedJobTitle]);
 
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [requirements]);
-
-    if (isLoading) {
+    // Handle loading and no-data states
+    if (isPostingLoading) {
         return <div>Loading...</div>;
+    }
+
+    if (!postingList || postingList.length === 0) {
+        return <div>No job postings found for this company.</div>;
     }
 
     return (
@@ -106,13 +140,13 @@ export default function Filter() {
                                     value={selectedJobTitle}
                                     onChange={(e) => {
                                         setSelectedJobTitle(e.target.value);
-                                        getApplications({ postId: e.target.value, requirements: null });
+                                        filterApplications({ postingId: e.target.value, bodyRequirements: {} });
                                         setNewPosting(true);
                                     }}
                                 >
-                                    {applications?.postingList.map((posting) => (
+                                    {postingList?.map((posting) => (
                                         <MenuItem value={posting._id} key={posting._id}>
-                                            {posting.title}
+                                            {posting.job.title}
                                         </MenuItem>
                                     ))}
                                 </Select>

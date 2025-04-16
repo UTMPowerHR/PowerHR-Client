@@ -6,6 +6,7 @@ import authReducer from '@features/auth/authSlice';
 import formReducer from '@features/form/formSlice';
 import companyReducer from '@features/company/companySlice';
 import jobReducer from '@features/job/jobSlice';
+import applicantReducer from '@features/applicant/applicantSlice';
 
 const persistConfig = {
     key: 'root',
@@ -22,6 +23,7 @@ export const store = configureStore({
         form: formReducer,
         company: companyReducer,
         job: jobReducer,
+        applicant: applicantReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
