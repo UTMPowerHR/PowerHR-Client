@@ -50,10 +50,6 @@ const hrSection = [
                         path: PATHS.JOB.LIST,
                     },
                     {
-                        title: 'Filter',
-                        path: PATHS.JOB.FILTER,
-                    },
-                    {
                         title: 'Create Job',
                         path: PATHS.JOB.CREATE,
                     },

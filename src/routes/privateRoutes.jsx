@@ -8,7 +8,6 @@ import * as Company from '@pages/company';
 import * as User from '@pages/user';
 import * as Job from '@pages/job';
 import * as Admin from '@pages/admin';
-import ResumeBuilder from '../pages/resume/ResumeBuilder';
 
 const privateRoutes = (
     <Route element={<ProtectedRoute />}>
@@ -41,7 +40,6 @@ const privateRoutes = (
             <Route>
                 <Route path={PATHS.JOB.CREATE} element={<Job.CreateJob />} />
                 <Route path={PATHS.JOB.LIST} element={<Job.ListJob />} />
-                <Route path={PATHS.JOB.FILTER} element={<Job.Filter />} />
                 <Route path={PATHS.JOB.INDEX} element={<Job.Browse />} />
                 <Route path={PATHS.JOB.EDIT.PATH} element={<Job.CreateJob />} />
             </Route>
@@ -57,10 +55,6 @@ const privateRoutes = (
 
             <Route>
                 <Route path={PATHS.ANALYTIC.TURNOVER} element={<Company.TurnOver />} />
-            </Route>
-
-            <Route>
-                <Route path={PATHS.RESUME.BUILDER} element={<ResumeBuilder />} />
             </Route>
         </Route>
     </Route>

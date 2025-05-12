@@ -28,10 +28,6 @@ const applicantSection = [
                     },
                 ],
             },
-            {
-                title: 'Resume',
-                path: PATHS.RESUME.BUILDER,
-            },
         ],
     },
 ];

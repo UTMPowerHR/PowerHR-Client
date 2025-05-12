@@ -97,9 +97,6 @@ const PATHS = {
     ANALYTIC: {
         TURNOVER: '/analytic/turnover',
     },
-    RESUME: {
-        BUILDER: '/resume/builder',
-    },
 };
 
 export default PATHS;

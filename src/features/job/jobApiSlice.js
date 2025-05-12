@@ -8,37 +8,7 @@ export const jobApiSlice = apiSlice.injectEndpoints({
                 method: 'POST',
                 body: { ...credentials },
             }),
-            invalidatesTags: ['Job'],
-        }),
-        getPostingListByCompanyId: builder.query({
-            query: (companyId) => ({
-                url: '/jobs/postings/company/' + companyId,
-            }),
-        }),
-        getAllApplicationsByCompany: builder.query({
-            query: ({ companyId, filterCriteria }) => ({
-                url: `/jobs/applications/company/${companyId}`,
-                params: filterCriteria,
-            }),
-        }),
-        filterApplications: builder.mutation({
-            query: ({ postingId, bodyRequirements }) => ({
-                url: `/jobs/applications/filter/` + postingId,
-                method: 'POST',
-                body: { requirements: bodyRequirements },
-            }),
-        }),
-        analyticOptionsApplications: builder.query({
-            query: ({ companyId, status }) => ({
-                url: `/jobs/applications/analytic-options/${companyId}`,
-                params: { status },
-            }),
-        }),
-        analyticCompletedApplications: builder.query({
-            query: ({ companyId, years, employmentTypes, jobTitles, status }) => ({
-                url: `/jobs/applications/analytic-completed/${companyId}`,
-                params: { years, employmentTypes, jobTitles, status },
-            }),
+            invalidatesTags: ['Job'], // Tag name for invalidation
         }),
         getPosting: builder.mutation({
             query: (id) => ({
@@ -109,9 +79,4 @@ export const {
     useGetApplicationsByPostingQuery,
     useUpdateApplicationMutation,
     useGetApplicationByApplicantQuery,
-    useGetPostingListByCompanyIdQuery,
-    useFilterApplicationsMutation,
-    useAnalyticOptionsApplicationsQuery,
-    useAnalyticCompletedApplicationsQuery,
-    useGetAllApplicationsByCompanyQuery,
 } = jobApiSlice;
