@@ -296,7 +296,7 @@ export const SideNav = (props) => {
                             },
                         }}
                     >
-                        Power Recruiter
+                        PowerHR
                     </Box>
                 </Stack>
             </Box>

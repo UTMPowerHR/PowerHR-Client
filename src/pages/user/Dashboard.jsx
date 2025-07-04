@@ -9,7 +9,7 @@ export default function Dashboard() {
             <Stack spacing={4}>
                 <Paper>
                     <Stack spacing={2} sx={{ p: 4 }}>
-                        <Typography variant="h4">Power Recruiter: Recruitment Management System</Typography>
+                        <Typography variant="h4">PowerHR Management Tool</Typography>
                         <Typography variant="body1">
                             Welcome, {user?.firstName} {user?.lastName}
                         </Typography>

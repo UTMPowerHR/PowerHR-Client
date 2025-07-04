@@ -112,7 +112,7 @@ export const TopNav = (props) => {
                                         },
                                     }}
                                 >
-                                    Power Recruiter
+                                    PowerHR
                                 </Box>
                             )}
                         </Stack>
