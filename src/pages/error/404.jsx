@@ -10,7 +10,7 @@ const Page = () => {
     return (
         <>
             <Helmet>
-                <title>Page Not Found | PowerHR</title>
+                <title>Page Not Found | Power Recruiter</title>
             </Helmet>
             <Box
                 component="main"
