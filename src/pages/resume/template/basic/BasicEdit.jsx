@@ -118,7 +118,6 @@ export default function BasicEdit() {
             setSection(temp[0] || null);
             setType(cardList.find((item) => item.name === temp[0])?.typeCard[0] || null);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data]);
 
     function addSection() {
