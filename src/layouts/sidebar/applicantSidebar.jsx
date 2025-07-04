@@ -28,6 +28,14 @@ const applicantSection = [
                     },
                 ],
             },
+            {
+                title: 'Resume Builder',
+                path: PATHS.RESUME.BUILDER,
+            },
+            {
+                title: 'Resume Extractor',
+                path: PATHS.RESUME.EXTRACTOR,
+            },
         ],
     },
 ];
