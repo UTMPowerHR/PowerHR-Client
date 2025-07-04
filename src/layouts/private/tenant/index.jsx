@@ -7,7 +7,7 @@ export const TenantSwitch = (props) => {
             <Stack alignItems="center" direction="row" spacing={2} {...props}>
                 <Box sx={{ flexGrow: 1 }}>
                     <Typography color="inherit" variant="h6">
-                        PowerHR
+                        Power Recruiter
                     </Typography>
                     <Typography color="neutral.400" variant="body2">
                         System

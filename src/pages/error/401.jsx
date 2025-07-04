@@ -10,7 +10,7 @@ const Page = () => {
     return (
         <>
             <Helmet>
-                <title>Authorization Required | PowerHR</title>
+                <title>Authorization Required | Power Recruiter</title>
             </Helmet>
             <Box
                 component="main"
