@@ -84,10 +84,10 @@ export default function ReferenceCard(props) {
                                 {i.email && i.phone
                                     ? i.email + ' | ' + i.phone
                                     : i.email
-                                    ? i.email
-                                    : i.phone
-                                    ? i.phone
-                                    : null}
+                                      ? i.email
+                                      : i.phone
+                                        ? i.phone
+                                        : null}
                             </Typography>
                         </Stack>
                     ))}
