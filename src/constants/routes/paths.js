@@ -81,6 +81,12 @@ const PATHS = {
         },
         LIST: '/job/list',
         FILTER: '/job/filter',
+        // INTERVIEW: {
+        //     PATH: '/job/:id/interview',
+        //     URL: function (id) {
+        //         return `/job/${id}/interview`;
+        //     },
+        // },
     },
     APPLICATION: {
         MANAGE: {
@@ -96,6 +102,10 @@ const PATHS = {
     },
     ANALYTIC: {
         TURNOVER: '/analytic/turnover',
+    },
+    RESUME: {
+        BUILDER: '/resume/builder',
+        EXTRACTOR: '/resume/extractor',
     },
 };
 
