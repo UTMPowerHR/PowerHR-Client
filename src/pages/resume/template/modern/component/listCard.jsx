@@ -14,6 +14,7 @@ import {
     FormControl,
     InputLabel,
     Button,
+    Chip,
 } from '@mui/material';
 import cloneDeep from 'lodash/cloneDeep';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,8 +25,8 @@ import { useDispatch, useSelector } from 'react-redux';
 export default function ListCard(props) {
     const { item, column, page, disabled, cardList } = props;
 
-    const titleColor = useSelector((state) => state.applicant.resume.template?.setting?.titleColor || '#000000');
-    const contentColor = useSelector((state) => state.applicant.resume.template?.setting?.contentColor || '#000000');
+    const titleColor = useSelector((state) => state.applicant.resume.template?.settings?.titleColor || '#000000');
+    // const contentColor = useSelector((state) => state.applicant.resume.template?.settings?.contentColor || '#000000');
     const formData = useSelector((state) => state.applicant.resume);
 
     const dispatch = useDispatch();
@@ -76,15 +77,22 @@ export default function ListCard(props) {
                     )}
                 </Stack>
 
-                <Stack direction="row" flexWrap="wrap">
-                    {formData[item.name].value.map((i, index) => (
-                        <Box key={index} sx={{ p: 1 }}>
-                            <Typography variant="body1" id="content" sx={{ color: contentColor }}>
-                                {i?.name}
-                            </Typography>
-                        </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                    {formData[item.name].value.map((listItem, index) => (
+                        <Chip
+                            key={index}
+                            label={listItem.name || listItem.skill || listItem}
+                            sx={{
+                                backgroundColor: titleColor,
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: titleColor,
+                                    opacity: 0.8,
+                                },
+                            }}
+                        />
                     ))}
-                </Stack>
+                </Box>
             </Stack>
 
             <Dialog

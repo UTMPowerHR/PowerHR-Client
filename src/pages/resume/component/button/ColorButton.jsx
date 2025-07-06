@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -10,173 +12,223 @@ import {
     Typography,
     IconButton,
     Stack,
-    Collapse,
     TextField,
     Tooltip,
+    Divider,
 } from '@mui/material';
 import { CirclePicker } from 'react-color';
 import { setSetting } from '../../../../features/applicant/applicantSlice';
 import { HexColorPicker } from 'react-colorful';
-import AddIcon from '@mui/icons-material/Add';
+import PaletteIcon from '@mui/icons-material/Palette';
 
 const ColorButton = () => {
     const [open, setOpen] = useState(false);
-    const titleColor = useSelector((state) => state.applicant.resume.template?.setting?.titleColor || '#000000');
-    const contentColor = useSelector((state) => state.applicant.resume.template?.setting?.contentColor || '#000000');
+    const titleColor = useSelector((state) => state.applicant.resume.template?.settings?.titleColor || '#2c3e50');
+    const contentColor = useSelector((state) => state.applicant.resume.template?.settings?.contentColor || '#34495e');
     const [showTitleHexPicker, setShowTitleHexPicker] = useState(false);
     const [showContentHexPicker, setShowContentHexPicker] = useState(false);
-    const [titleHexCode, setTitleHexCode] = useState('');
-    const [contentHexCode, setContentHexCode] = useState('');
-    const [fixedColors, setFixedColors] = useState(['#1f77b4', '#cca504', '#f2e4d4', '#294023', '#000000', '#111111']);
+    const [titleHexInput, setTitleHexInput] = useState(titleColor);
+    const [contentHexInput, setContentHexInput] = useState(contentColor);
 
     const dispatch = useDispatch();
 
-    const handleOpen = () => setOpen(!open);
+    // Predefined color palette
+    const colorPalette = [
+        '#2c3e50',
+        '#34495e',
+        '#1abc9c',
+        '#16a085',
+        '#3498db',
+        '#2980b9',
+        '#9b59b6',
+        '#8e44ad',
+        '#e74c3c',
+        '#c0392b',
+        '#f39c12',
+        '#e67e22',
+        '#27ae60',
+        '#229954',
+        '#17202a',
+        '#5d6d7e',
+        '#af7ac5',
+        '#f1948a',
+    ];
+
+    const handleOpen = () => setOpen(true);
     const handleClose = () => {
         setOpen(false);
         setShowTitleHexPicker(false);
         setShowContentHexPicker(false);
+        // Reset hex inputs to current colors
+        setTitleHexInput(titleColor);
+        setContentHexInput(contentColor);
     };
 
     const handleTitleColorChange = (color) => {
-        const newColor = color.hex;
+        const newColor = typeof color === 'string' ? color : color.hex;
         dispatch(setSetting({ name: 'titleColor', value: newColor }));
-        setTitleHexCode(newColor);
+        setTitleHexInput(newColor);
     };
 
     const handleContentColorChange = (color) => {
-        const newColor = color.hex;
+        const newColor = typeof color === 'string' ? color : color.hex;
         dispatch(setSetting({ name: 'contentColor', value: newColor }));
-        setContentHexCode(newColor);
+        setContentHexInput(newColor);
     };
 
-    const handleToggleTitleHexPicker = () => {
-        setShowTitleHexPicker(!showTitleHexPicker);
-    };
-
-    const handleToggleContentHexPicker = () => {
-        setShowContentHexPicker(!showContentHexPicker);
-    };
-
-    const handleHexColorSelection = (color) => {
-        const newColor = color;
-        if (showTitleHexPicker) {
-            setTitleHexCode(newColor);
-        } else if (showContentHexPicker) {
-            setContentHexCode(newColor);
+    const handleTitleHexInputChange = (event) => {
+        const value = event.target.value;
+        setTitleHexInput(value);
+        // Apply color if it's a valid hex color
+        if (/^#[0-9A-F]{6}$/i.test(value)) {
+            dispatch(setSetting({ name: 'titleColor', value: value }));
         }
     };
 
-    const handleColorSelection = () => {
-        if (showTitleHexPicker) {
-            setFixedColors((prevColors) => [...prevColors, titleHexCode]);
-            setShowTitleHexPicker(false);
-        } else if (showContentHexPicker) {
-            setFixedColors((prevColors) => [...prevColors, contentHexCode]);
-            setShowContentHexPicker(false);
+    const handleContentHexInputChange = (event) => {
+        const value = event.target.value;
+        setContentHexInput(value);
+        // Apply color if it's a valid hex color
+        if (/^#[0-9A-F]{6}$/i.test(value)) {
+            dispatch(setSetting({ name: 'contentColor', value: value }));
         }
     };
 
     return (
         <Box>
-            <Stack spacing={2} sx={{ p: 2 }} direction="row" justifyContent="space-between" alignItems="center">
-                <Stack spacing={1} direction="row" alignItems="center">
-                    <IconButton onClick={handleOpen} sx={{ position: 'relative' }}>
-                        <Stack width={30} height={30}>
-                            <Typography>A</Typography>
-                            <Box pt={0.65} sx={{ backgroundColor: contentColor, flexGrow: 1 }} />
-                            <Box pt={0.65} sx={{ backgroundColor: titleColor, flexGrow: 1 }} />
-                        </Stack>
-                    </IconButton>
-                </Stack>
-            </Stack>
-            <Collapse in={open} sx={{ position: 'absolute', right: 100 }}>
-                <Dialog open={open} onClose={handleClose} sx={{ width: '380px', maxHeight: '200vh', margin: 'auto' }}>
-                    <DialogTitle>Title</DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body1">Select a color:</Typography>
-                        <Stack direction="row" alignItems="center">
+            <Tooltip title="Customize Colors" placement="top">
+                <IconButton onClick={handleOpen} sx={{ position: 'relative' }}>
+                    <PaletteIcon />
+                </IconButton>
+            </Tooltip>
+
+            <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+                <DialogTitle>Customize Resume Colors</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={3} sx={{ mt: 1 }}>
+                        {/* Title Color Section */}
+                        <Box>
+                            <Typography variant="h6" gutterBottom>
+                                Title Color
+                            </Typography>
+                            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        backgroundColor: titleColor,
+                                        border: '2px solid #ddd',
+                                        borderRadius: 1,
+                                    }}
+                                />
+                                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {titleColor}
+                                </Typography>
+                            </Stack>
+
                             <CirclePicker
                                 color={titleColor}
-                                onChangeComplete={(color) => handleTitleColorChange(color)}
-                                colors={fixedColors}
+                                onChangeComplete={handleTitleColorChange}
+                                colors={colorPalette}
+                                width="100%"
                             />
-                            <Tooltip title="Toggle Hex Picker" placement="bottom">
-                                <IconButton onClick={handleToggleTitleHexPicker} color="primary">
-                                    <AddIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Stack>
-                    </DialogContent>
 
-                    {showTitleHexPicker && (
-                        <DialogContent>
-                            <HexColorPicker color={titleColor} onChange={(color) => handleHexColorSelection(color)} />
-                            <TextField
-                                label="Hex Code"
-                                variant="outlined"
-                                margin="normal"
-                                value={titleHexCode}
-                                onChange={(e) => setTitleHexCode(e.target.value)}
-                                fullWidth
-                            />
-                            <DialogActions>
-                                <Button onClick={handleColorSelection} color="primary">
-                                    Apply
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 2 }}>
+                                <TextField
+                                    label="Hex Code"
+                                    variant="outlined"
+                                    size="small"
+                                    value={titleHexInput}
+                                    onChange={handleTitleHexInputChange}
+                                    placeholder="#000000"
+                                    sx={{ flexGrow: 1 }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => setShowTitleHexPicker(!showTitleHexPicker)}
+                                >
+                                    {showTitleHexPicker ? 'Hide' : 'Picker'}
                                 </Button>
-                                <Button onClick={handleClose} color="primary">
-                                    Cancel
-                                </Button>
-                            </DialogActions>
-                        </DialogContent>
-                    )}
+                            </Stack>
 
-                    <DialogTitle>Content</DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body1">Select a color:</Typography>
-                        <Stack direction="row" alignItems="center">
+                            {showTitleHexPicker && (
+                                <Box sx={{ mt: 2 }}>
+                                    <HexColorPicker
+                                        color={titleColor}
+                                        onChange={handleTitleColorChange}
+                                        style={{ width: '100%' }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Divider />
+
+                        {/* Content Color Section */}
+                        <Box>
+                            <Typography variant="h6" gutterBottom>
+                                Content Color
+                            </Typography>
+                            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+                                <Box
+                                    sx={{
+                                        width: 40,
+                                        height: 40,
+                                        backgroundColor: contentColor,
+                                        border: '2px solid #ddd',
+                                        borderRadius: 1,
+                                    }}
+                                />
+                                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                                    {contentColor}
+                                </Typography>
+                            </Stack>
+
                             <CirclePicker
                                 color={contentColor}
-                                onChangeComplete={(color) => handleContentColorChange(color)}
-                                colors={fixedColors}
+                                onChangeComplete={handleContentColorChange}
+                                colors={colorPalette}
+                                width="100%"
                             />
-                            <Tooltip title="Toggle Hex Picker" placement="bottom">
-                                <IconButton onClick={handleToggleContentHexPicker} color="primary">
-                                    <AddIcon />
-                                </IconButton>
-                            </Tooltip>
-                        </Stack>
-                    </DialogContent>
 
-                    {showContentHexPicker && (
-                        <DialogContent>
-                            <HexColorPicker color={contentColor} onChange={(color) => handleHexColorSelection(color)} />
-                            <TextField
-                                label="Hex Code"
-                                variant="outlined"
-                                margin="normal"
-                                value={contentHexCode}
-                                onChange={(e) => setContentHexCode(e.target.value)}
-                                fullWidth
-                            />
-                            <DialogActions>
-                                <Button onClick={handleColorSelection} color="primary">
-                                    Apply
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 2 }}>
+                                <TextField
+                                    label="Hex Code"
+                                    variant="outlined"
+                                    size="small"
+                                    value={contentHexInput}
+                                    onChange={handleContentHexInputChange}
+                                    placeholder="#000000"
+                                    sx={{ flexGrow: 1 }}
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => setShowContentHexPicker(!showContentHexPicker)}
+                                >
+                                    {showContentHexPicker ? 'Hide' : 'Picker'}
                                 </Button>
-                                <Button onClick={handleClose} color="primary">
-                                    Cancel
-                                </Button>
-                            </DialogActions>
-                        </DialogContent>
-                    )}
+                            </Stack>
 
-                    <DialogActions>
-                        <Button onClick={handleClose} color="primary">
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Collapse>
+                            {showContentHexPicker && (
+                                <Box sx={{ mt: 2 }}>
+                                    <HexColorPicker
+                                        color={contentColor}
+                                        onChange={handleContentColorChange}
+                                        style={{ width: '100%' }}
+                                    />
+                                </Box>
+                            )}
+                        </Box>
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary">
+                        Done
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

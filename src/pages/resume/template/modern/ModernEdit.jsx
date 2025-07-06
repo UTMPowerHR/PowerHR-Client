@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Box,
     Grid,
@@ -68,8 +70,8 @@ const cardList = [
 
 export default function ModernEdit() {
     const data = useSelector((state) => state.applicant.resume);
-    const titleColor = useSelector((state) => state.applicant.resume.template?.setting?.titleColor || '#000000');
-    const contentColor = useSelector((state) => state.applicant.resume.template?.setting?.contentColor || '#000000');
+    const titleColor = useSelector((state) => state.applicant.resume.template?.settings?.titleColor || '#2c3e50');
+    const contentColor = useSelector((state) => state.applicant.resume.template?.settings?.contentColor || '#34495e');
     const dispatch = useDispatch();
 
     const [open, setOpen] = useState(null);
@@ -118,6 +120,7 @@ export default function ModernEdit() {
             setSection(temp[0] || null);
             setType(cardList.find((item) => item.name === temp[0])?.typeCard[0] || null);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data]);
 
     function addSection() {

@@ -48,6 +48,8 @@ export default function ResumeBuilder() {
     const { data: resumeData, isLoading } = useGetResumeQuery(id);
     const [saveResume, { isLoading: saveLoading }] = useSaveResumeMutation();
     const dispatch = useDispatch();
+    const fullState = useSelector((state) => state); // Add this line
+    console.log('fullState', fullState);
     const formData = useSelector((state) => state.applicant.resume);
     const template = useSelector((state) => state.applicant.resume.template.name);
 
@@ -59,7 +61,7 @@ export default function ResumeBuilder() {
 
     useEffect(() => {
         if (resumeData) {
-            // console.log('Resume data received:', resumeData);
+            console.log('Resume data received:', resumeData);
 
             // Ensure template has proper structure
             const processedResumeData = {

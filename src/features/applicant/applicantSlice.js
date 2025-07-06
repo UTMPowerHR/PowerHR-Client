@@ -146,12 +146,9 @@ export const applicantSlice = createSlice({
         },
         setSetting: (state, action) => {
             const { name, value } = action.payload;
-
-            // Ensure that 'settings' exists before setting the value
             if (!state.resume.template.settings) {
                 state.resume.template.settings = {};
             }
-
             state.resume.template.settings[name] = value;
         },
         changeTemplate: (state, action) => {

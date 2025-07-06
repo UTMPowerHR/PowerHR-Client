@@ -23,8 +23,8 @@ import { setResume } from '../../../../../features/applicant/applicantSlice';
 export default function PointCard(props) {
     const { item, column, page, disabled, cardList } = props;
 
-    const titleColor = useSelector((state) => state.applicant.resume.template?.setting?.titleColor || '#000000');
-    const contentColor = useSelector((state) => state.applicant.resume.template?.setting?.contentColor || '#000000');
+    const titleColor = useSelector((state) => state.applicant.resume.template?.settings?.titleColor || '#000000');
+    const contentColor = useSelector((state) => state.applicant.resume.template?.settings?.contentColor || '#000000');
     const formData = useSelector((state) => state.applicant.resume);
     const dispatch = useDispatch();
 

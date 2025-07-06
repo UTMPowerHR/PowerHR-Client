@@ -5,8 +5,8 @@ import renderCard from '../../component/card';
 
 export default function BasicPreview() {
     const data = useSelector((state) => state.applicant.resume);
-    const titleColor = data.template?.setting?.titleColor || '#000000';
-    const contentColor = data.template?.setting?.contentColor || '#000000';
+    const titleColor = data.template?.settings?.titleColor || '#000000';
+    const contentColor = data.template?.settings?.contentColor || '#000000';
 
     const size = {
         width: '8.27in',
