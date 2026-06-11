@@ -168,16 +168,16 @@ function TableTerminateEmployees({ onTerminateSuccess, targetMonth, canTerminate
         setSearchTerm(event.target.value);
     };
 
-    // Filter employees based on the search term
-    // Filter employees based on the search term and exclude the currently logged-in user
+    const isPastMonth = dayjs(targetMonth, 'MMM YYYY').startOf('month').isBefore(dayjs().startOf('month'));
+
+    // Past month: show employees whose terminationDate falls in that month (historical view)
+    // Current / future month: show active employees only
     const filteredEmployees = employees.filter((employee) => {
         const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
         const email = employee.email.toLowerCase();
         const role = determineRole(employee.jobTitle);
-        const hireDate = employee.hireDate && dayjs(employee.hireDate).isAfter(dayjs());
-        const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
-
-        // Check if the employee matches the selected filters
+        const searchMatches =
+            fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
         const roleMatches = selectedRoles.length === 0 || selectedRoles.includes(employee.jobTitle);
         const departmentMatches =
             selectedDepartments.length === 0 ||
@@ -185,9 +185,18 @@ function TableTerminateEmployees({ onTerminateSuccess, targetMonth, canTerminate
                 .filter((dept) => selectedDepartments.includes(dept.name))
                 .some((dept) => dept._id === employee.department);
 
+        if (isPastMonth) {
+            const terminationMonth = employee.terminationDate
+                ? dayjs(employee.terminationDate).format('MMM YYYY')
+                : null;
+            return terminationMonth === targetMonth && role <= 1 && searchMatches && roleMatches && departmentMatches;
+        }
+
+        const hireDate = employee.hireDate && dayjs(employee.hireDate).isAfter(dayjs());
+        const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
         return (
             employee._id !== user._id &&
-            (fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())) &&
+            searchMatches &&
             role <= 1 &&
             !hireDate &&
             roleMatches &&
@@ -278,7 +287,9 @@ function TableTerminateEmployees({ onTerminateSuccess, targetMonth, canTerminate
                 </Stack>
                 <Card sx={{ flex: 2, minWidth: '60%', height: '100%' }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
-                        <Typography variant="h5">Employees</Typography>
+                        <Typography variant="h5">
+                            {isPastMonth ? `Employees Terminated in ${targetMonth}` : 'Employees'}
+                        </Typography>
                         <OutlinedInput
                             placeholder="Search"
                             value={searchTerm}
@@ -313,9 +324,6 @@ function TableTerminateEmployees({ onTerminateSuccess, targetMonth, canTerminate
                                 {filteredEmployees.map((employee) => {
                                     const isTerminated = employee.terminationDate && dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
                                     const isPendingTermination = employee.terminationDate && dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
-                                    // console.log(dayjs(employee.terminationDate).isBefore(dayjs()));
-                                    console.log(isTerminated);
-                                    console.log(isPendingTermination);
 
                                     return (
                                         <TableRow key={employee._id}>

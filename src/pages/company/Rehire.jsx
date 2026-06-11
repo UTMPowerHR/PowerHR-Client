@@ -1,5 +1,5 @@
 import { Grid, Typography } from '@mui/material';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import dayjs from 'dayjs';
 import RehireTable from './components/tableRehireEmployees';
 import RankedEmployeesTable from './components/rankFormerEmployee';
@@ -7,14 +7,11 @@ import RetrieveRehireData from './components/RetrieveRehireData';
 
 function Rehire() {
     const currentMonth = dayjs().format('MMM YYYY');
-    const [completedCount, setCompletedCount] = useState(0);
+    const [completedByMonth, setCompletedByMonth] = useState({});
     const [targetMonth, setTargetMonth] = useState(currentMonth);
     const [requiredCount, setRequiredCount] = useState(0);
 
-    // Reset session counter whenever HR switches to a different month
-    useEffect(() => {
-        setCompletedCount(0);
-    }, [targetMonth]);
+    const completedCount = completedByMonth[targetMonth] || 0;
 
     const handleMonthLoaded = useCallback((month, required) => {
         setTargetMonth(month);
@@ -24,7 +21,8 @@ function Rehire() {
     // Rehire button only active when viewing current month and there are pending rehirings
     const canRehire = targetMonth === currentMonth && requiredCount > 0;
 
-    const handleRehireSuccess = () => setCompletedCount((prev) => prev + 1);
+    const handleRehireSuccess = () =>
+        setCompletedByMonth((prev) => ({ ...prev, [targetMonth]: (prev[targetMonth] || 0) + 1 }));
 
     return (
         <Grid container spacing={{ xs: 3, lg: 4 }}>
@@ -46,7 +44,7 @@ function Rehire() {
             </Grid>
             <Grid item xs={12}>
                 <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>Run TOPSIS Analysis</Typography>
-                <RankedEmployeesTable />
+                <RankedEmployeesTable canRehire={canRehire} onRehireSuccess={handleRehireSuccess} />
             </Grid>
         </Grid>
     );

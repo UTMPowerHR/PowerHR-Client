@@ -37,6 +37,8 @@ function RetrieveRehireData({ completedCount, onMonthLoaded }) {
     const entry = workforceData.find((e) => e.month === selectedMonth);
     const requiredRehirings = entry ? entry.count_this_month : 0;
     const isCurrentMonth = selectedMonth === currentMonth;
+    const isPastMonth = dayjs(selectedMonth, 'MMM YYYY').startOf('month').isBefore(dayjs().startOf('month'));
+    const isFutureMonth = dayjs(selectedMonth, 'MMM YYYY').startOf('month').isAfter(dayjs().startOf('month'));
 
     useEffect(() => {
         if (onMonthLoaded) onMonthLoaded(selectedMonth, requiredRehirings);
@@ -44,11 +46,28 @@ function RetrieveRehireData({ completedCount, onMonthLoaded }) {
 
     const remaining = Math.max(requiredRehirings - completedCount, 0);
 
-    const counterBoxes = [
-        { label: 'Required',  value: requiredRehirings, color: '#1976d2' },
-        { label: 'Rehired',   value: isCurrentMonth ? completedCount : 0, color: '#31d436' },
-        { label: 'Remaining', value: isCurrentMonth ? remaining : requiredRehirings, color: (isCurrentMonth ? remaining : requiredRehirings) > 0 ? '#d32f2f' : '#31d436' },
-    ];
+    // Current month: Required / Rehired / Remaining
+    // Future month: Required only (no completed actions yet)
+    // Past month: no counter (historical view)
+    const counterBoxes = isCurrentMonth
+        ? [
+            { label: 'Required',  value: requiredRehirings, color: '#1976d2' },
+            { label: 'Rehired',   value: completedCount,    color: '#31d436' },
+            { label: 'Remaining', value: remaining,         color: remaining > 0 ? '#d32f2f' : '#31d436' },
+        ]
+        : isFutureMonth
+        ? [
+            { label: 'Required',  value: requiredRehirings, color: '#1976d2' },
+        ]
+        : [];
+
+    const statusText = isPastMonth
+        ? `Historical view — employees rehired in ${selectedMonth}`
+        : requiredRehirings > 0
+            ? `Rehiring Required: ${requiredRehirings} workers in ${selectedMonth}`
+            : `No Rehiring Required in ${selectedMonth}`;
+
+    const statusColor = isPastMonth ? 'text.secondary' : requiredRehirings > 0 ? 'error' : '#31d436';
 
     return (
         <Stack spacing={2} p={2}>
@@ -56,12 +75,10 @@ function RetrieveRehireData({ completedCount, onMonthLoaded }) {
             <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                 {/* Left: status + optional warning */}
                 <Stack spacing={0.5}>
-                    <Typography variant="h6" color={requiredRehirings > 0 ? 'error' : '#31d436'}>
-                        {requiredRehirings > 0
-                            ? `Rehiring Required: ${requiredRehirings} workers in ${selectedMonth}`
-                            : `No Rehiring Required in ${selectedMonth}`}
+                    <Typography variant="h6" color={statusColor}>
+                        {statusText}
                     </Typography>
-                    {!isCurrentMonth && (
+                    {!isCurrentMonth && !isPastMonth && (
                         <Typography variant="caption" color="warning.main">
                             Viewing {selectedMonth} — actions only available for current month ({currentMonth})
                         </Typography>
@@ -95,8 +112,8 @@ function RetrieveRehireData({ completedCount, onMonthLoaded }) {
                 </Stack>
             </Stack>
 
-            {/* Counter boxes — only show when there is a requirement */}
-            {requiredRehirings > 0 && (
+            {/* Counter boxes — hidden for past months, shown for current/future when required > 0 */}
+            {!isPastMonth && counterBoxes.length > 0 && (
                 <Stack direction="row" spacing={2}>
                     {counterBoxes.map((box) => (
                         <Paper

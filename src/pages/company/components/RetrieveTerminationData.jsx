@@ -37,6 +37,8 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
     const entry = workforceData.find((e) => e.month === selectedMonth);
     const requiredTerminations = entry ? entry.count_this_month : 0;
     const isCurrentMonth = selectedMonth === currentMonth;
+    const isPastMonth = dayjs(selectedMonth, 'MMM YYYY').startOf('month').isBefore(dayjs().startOf('month'));
+    const isFutureMonth = dayjs(selectedMonth, 'MMM YYYY').startOf('month').isAfter(dayjs().startOf('month'));
 
     useEffect(() => {
         if (onMonthLoaded) onMonthLoaded(selectedMonth, requiredTerminations);
@@ -44,11 +46,28 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
 
     const remaining = Math.max(requiredTerminations - completedCount, 0);
 
-    const counterBoxes = [
-        { label: 'Required',   value: requiredTerminations, color: '#1976d2' },
-        { label: 'Terminated', value: isCurrentMonth ? completedCount : 0, color: '#31d436' },
-        { label: 'Remaining',  value: isCurrentMonth ? remaining : requiredTerminations, color: (isCurrentMonth ? remaining : requiredTerminations) > 0 ? '#d32f2f' : '#31d436' },
-    ];
+    // Current month: Required / Terminated / Remaining
+    // Future month: Required only (no completed actions yet)
+    // Past month: no counter (historical view)
+    const counterBoxes = isCurrentMonth
+        ? [
+            { label: 'Required',   value: requiredTerminations, color: '#1976d2' },
+            { label: 'Terminated', value: completedCount,        color: '#31d436' },
+            { label: 'Remaining',  value: remaining,             color: remaining > 0 ? '#d32f2f' : '#31d436' },
+        ]
+        : isFutureMonth
+        ? [
+            { label: 'Required',   value: requiredTerminations, color: '#1976d2' },
+        ]
+        : [];
+
+    const statusText = isPastMonth
+        ? `Historical view — employees terminated in ${selectedMonth}`
+        : requiredTerminations > 0
+            ? `Termination Required: ${requiredTerminations} workers in ${selectedMonth}`
+            : `No Termination Required in ${selectedMonth}`;
+
+    const statusColor = isPastMonth ? 'text.secondary' : requiredTerminations > 0 ? 'error' : '#31d436';
 
     return (
         <Stack spacing={2} p={2}>
@@ -56,12 +75,10 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
             <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                 {/* Left: status + optional warning */}
                 <Stack spacing={0.5}>
-                    <Typography variant="h6" color={requiredTerminations > 0 ? 'error' : '#31d436'}>
-                        {requiredTerminations > 0
-                            ? `Termination Required: ${requiredTerminations} workers in ${selectedMonth}`
-                            : `No Termination Required in ${selectedMonth}`}
+                    <Typography variant="h6" color={statusColor}>
+                        {statusText}
                     </Typography>
-                    {!isCurrentMonth && (
+                    {!isCurrentMonth && !isPastMonth && (
                         <Typography variant="caption" color="warning.main">
                             Viewing {selectedMonth} — actions only available for current month ({currentMonth})
                         </Typography>
@@ -77,7 +94,8 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
                     )}
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
-                            views={['month']}
+                            views={['year', 'month']}
+                            openTo="month"
                             label="Filter by Month"
                             value={dayjs(selectedMonth, 'MMM YYYY')}
                             onChange={(newValue) => {
@@ -94,8 +112,8 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
                 </Stack>
             </Stack>
 
-            {/* Counter boxes — only show when there is a requirement */}
-            {requiredTerminations > 0 && (
+            {/* Counter boxes — hidden for past months, shown for current/future when required > 0 */}
+            {!isPastMonth && counterBoxes.length > 0 && (
                 <Stack direction="row" spacing={2}>
                     {counterBoxes.map((box) => (
                         <Paper

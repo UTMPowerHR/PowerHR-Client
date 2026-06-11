@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     Card,
     Table,
@@ -20,29 +20,19 @@ import {
     TextField,
 } from '@mui/material';
 import dayjs from 'dayjs';
-import {
-    useCreateResumeMutation,
-    useGetResumeByUserQuery,
-    useGetAllResumesQuery,
-    useUpdateResumeMutation,
-    useDeleteResumeMutation,
-} from '@features/resume/resumeApiSlice';
+import { useGetAllResumesQuery } from '@features/resume/resumeApiSlice';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import determineRole from './roleHierarchy';
 import {
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
     useGetDepartmentsQuery,
 } from '@features/company/companyApiSlice';
-import { useGetAllEmploymentHistoryQuery } from '../../../features/employmentHistory/employmentHistoryApiSlice';
-import { setEmployees } from '@features/company/companySlice';
-import { useDispatch, useSelector } from 'react-redux';
-import { filter } from 'lodash';
+import { useSelector } from 'react-redux';
 
 dayjs.extend(isSameOrBefore);
 
@@ -278,7 +268,7 @@ function performTOPSISAnalysis(employees, departmentsData, selectedRole, selecte
 }
 
 // Update the component to pass allResumes
-function RankedEmployeesTable() {
+function RankedEmployeesTable({ canRehire = false, onRehireSuccess }) {
 
     const initialCriteria = [
         {
@@ -324,8 +314,8 @@ function RankedEmployeesTable() {
         // You can add more criteria here if needed
     ];
     const user = useSelector((state) => state.auth.user);
-    const { data: employmentHistoryData } = useGetAllEmploymentHistoryQuery();
-    const [employees, setEmployees] = useState([]);
+    const { data: employeesData } = useGetEmployeesQuery(user.company);
+    const employees = employeesData?.employees || [];
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const { data: allResumes, isLoading: isResumesLoading } = useGetAllResumesQuery(user.company);
     const availableRoles = [...new Set(employees.map((employee) => employee.jobTitle))];
@@ -334,7 +324,6 @@ function RankedEmployeesTable() {
 
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [updateEmployee] = useUpdateEmployeeMutation();
-    const dispatch = useDispatch();
 
 
 
@@ -345,43 +334,6 @@ function RankedEmployeesTable() {
     const [selectedDepartment, setSelectedDepartment] = useState('');
 
 
-    useEffect(() => {
-        if (employmentHistoryData) {
-            const newEmployee = employmentHistoryData.map((emp) => {
-                return {
-                    ...emp._id,
-                    jobTitle: emp.jobTitle,
-                    terminationDate: emp.terminationDate,
-                    hireDate: emp.hireDate,
-                    deptName: emp.department.name,
-                    departmentId: emp.department._id,
-                    salary: emp.salary,
-                    personalEmail: emp.personalEmail,
-                    company: emp.company,
-                    employmentHistoryId: emp._id,
-                }
-            });
-            setEmployees(newEmployee);
-        }
-    }, [employees, employmentHistoryData]);
-
-    const filteredEmployees = employees.filter((employee) => {
-
-        // Check if employee is terminated (terminationDate is in the past or today)
-        const isTerminated = employee.terminationDate &&
-            dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
-
-        // Check if employee is scheduled to be hired (hireDate is in the future)
-        const isScheduledForHire = employee.hireDate &&
-            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
-
-
-
-        return (
-            employee._id !== user._id &&
-            (isTerminated || isScheduledForHire) // Show only terminated or scheduled employees
-        );
-    });
 
 
     // Handlers for criteria modification
@@ -417,8 +369,8 @@ function RankedEmployeesTable() {
                     terminationDate: null,
                 }).unwrap();
 
-                dispatch(setEmployees(data.employees));
                 formik.resetForm();
+                if (onRehireSuccess) onRehireSuccess();
             } catch (error) {
                 console.error("Failed to rehire employee:", error);
             } finally {
@@ -499,15 +451,7 @@ function RankedEmployeesTable() {
 
         return rankedEmployees.map(employee => {
             const matchedResume = allResumes.find(resume => resume.user === employee._id);
-
-            // Log matching details for debugging
-            console.log('Employee ID:', employee._id);
-            console.log('Matched Resume:', matchedResume);
-
-            return {
-                ...employee,
-                resume: matchedResume || null
-            };
+            return { ...employee, resume: matchedResume || null };
         });
     }, [rankedEmployees, allResumes]);
 
@@ -643,7 +587,8 @@ function RankedEmployeesTable() {
                                         variant="contained"
                                         color="primary"
                                         onClick={() => handleOpenDialog(employee)}
-                                        disabled={rehiring}
+                                        disabled={!canRehire || rehiring}
+                                        title={!canRehire ? 'Rehiring is only available in the current month when required' : ''}
                                     >
                                         Rehire
                                     </Button>

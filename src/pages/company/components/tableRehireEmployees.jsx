@@ -148,21 +148,16 @@ function TableRehireEmployees({ onRehireSuccess, targetMonth, canRehire }) {
         setOpen(true);
     };
 
+    const isPastMonth = dayjs(targetMonth, 'MMM YYYY').startOf('month').isBefore(dayjs().startOf('month'));
+
+    // Past month: show employees whose hireDate falls in that month (historical rehire view)
+    // Current / future month: show terminated or scheduled-for-hire employees
     const filteredEmployees = employees.filter((employee) => {
         const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
         const email = employee.email.toLowerCase();
         const role = determineRole(employee.jobTitle);
         const searchTermLower = searchTerm.toLowerCase();
-
-        // Check if employee is terminated (terminationDate is in the past or today)
-        const isTerminated = employee.terminationDate &&
-            dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
-
-        // Check if employee is scheduled to be hired (hireDate is in the future)
-        const isScheduledForHire = employee.hireDate &&
-            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
-
-        // Check if the employee matches the selected filters
+        const searchMatches = searchTerm === '' || fullName.includes(searchTermLower) || email.includes(searchTermLower);
         const roleMatches = selectedRoles.length === 0 || selectedRoles.includes(employee.jobTitle);
         const departmentMatches =
             selectedDepartments.length === 0 ||
@@ -170,9 +165,15 @@ function TableRehireEmployees({ onRehireSuccess, targetMonth, canRehire }) {
                 .filter((dept) => selectedDepartments.includes(dept.name))
                 .some((dept) => dept._id === employee.department);
 
-        const searchMatches = searchTerm === '' ||
-            fullName.includes(searchTermLower) ||
-            email.includes(searchTermLower);
+        if (isPastMonth) {
+            const hireMonth = employee.hireDate ? dayjs(employee.hireDate).format('MMM YYYY') : null;
+            return hireMonth === targetMonth && role <= 1 && searchMatches && roleMatches && departmentMatches;
+        }
+
+        const isTerminated = employee.terminationDate &&
+            dayjs(employee.terminationDate).isSameOrBefore(dayjs(), 'day');
+        const isScheduledForHire = employee.hireDate &&
+            dayjs(employee.hireDate).isAfter(dayjs(), 'day');
 
         return (
             employee._id !== user._id &&
@@ -180,7 +181,7 @@ function TableRehireEmployees({ onRehireSuccess, targetMonth, canRehire }) {
             role <= 1 &&
             roleMatches &&
             departmentMatches &&
-            (isTerminated || isScheduledForHire) // Show only terminated or scheduled employees
+            (isTerminated || isScheduledForHire)
         );
     });
 
@@ -262,7 +263,9 @@ function TableRehireEmployees({ onRehireSuccess, targetMonth, canRehire }) {
                 </Stack>
                 <Card sx={{ flex: 2, minWidth: '60%', height: '100%' }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
-                        <Typography variant="h5">Candidates</Typography>
+                        <Typography variant="h5">
+                            {isPastMonth ? `Employees Rehired in ${targetMonth}` : 'Candidates'}
+                        </Typography>
                         <TextField
                             placeholder="Search employees..."
                             variant="outlined"

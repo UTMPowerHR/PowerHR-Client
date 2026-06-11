@@ -268,7 +268,7 @@ function performTOPSISAnalysis(filteredEmployees, departmentsData, selectedRole,
     return calculateTOPSISScore(normalizedData);
 }
 
-function RankEmployee() {
+function RankEmployee({ canTerminate = false, onTerminateSuccess }) {
     const initialCriteria = [
         {
             name: 'Years of Experience',
@@ -444,15 +444,12 @@ function RankEmployee() {
                 console.error('Notice period cannot be a past date.');
             }
 
-            // Update local state after successful termination
             dispatch(setEmployees(
                 employees.map(emp => emp._id === selectedEmployee._id ? updatedEmployee : emp)
             ));
 
-            // Decrease the required termination count
-            setRequiredTerminations((prevCount) => Math.max(prevCount - 1, 0));
-
-            setSelectedEmployee(null); // Reset selected employee
+            if (onTerminateSuccess) onTerminateSuccess();
+            setSelectedEmployee(null);
         } catch (error) {
             console.error('Failed to terminate employee:', error);
         }
@@ -638,28 +635,29 @@ function RankEmployee() {
                                         </TableCell>
 
                                         <TableCell align="right">
-
                                             <IconButton
-                                                onClick={() => handleTerminateClick(employee._id)}
+                                                onClick={() => canTerminate && handleTerminateClick(employee._id)}
+                                                disabled={!canTerminate}
                                                 color="error"
+                                                title={!canTerminate ? 'Termination is only available in the current month when required' : ''}
                                                 sx={{
                                                     border: '2px solid',
-                                                    borderColor: 'error.main',
-                                                    color: 'error',
+                                                    borderColor: canTerminate ? 'error.main' : 'grey.600',
                                                     backgroundColor: 'transparent',
                                                     borderRadius: '8px',
                                                     padding: '6px',
                                                     fontSize: '1rem',
                                                     fontWeight: 'bold',
-                                                    '&:hover': {
+                                                    opacity: canTerminate ? 1 : 0.4,
+                                                    cursor: canTerminate ? 'pointer' : 'not-allowed',
+                                                    '&:hover': canTerminate ? {
                                                         backgroundColor: 'rgba(255, 0, 0, 1)',
                                                         color: '#1C2536',
-                                                    },
+                                                    } : {},
                                                 }}
                                             >
                                                 Terminate
                                             </IconButton>
-
                                         </TableCell>
                                     </TableRow>
                                 );
