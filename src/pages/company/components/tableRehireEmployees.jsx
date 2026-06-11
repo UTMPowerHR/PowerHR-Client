@@ -28,9 +28,8 @@ import {
     useGetEmployeesQuery,
     useUpdateEmployeeMutation,
     useGetDepartmentsQuery,
-    useDeleteEmploymentHistoryMutation,
 } from '@features/company/companyApiSlice';
-import { setEmployees } from '@features/company/companySlice';
+import { setEmployees as setEmployeesRedux } from '@features/company/companySlice';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -41,30 +40,14 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import determineRole from './roleHierarchy';
-import { useGetAllEmploymentHistoryQuery } from '../../../features/employmentHistory/employmentHistoryApiSlice';
-import { useGetUserByIdQuery } from '../../../features/user/userApiSlice';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-function TableRehireEmployees() {
+function TableRehireEmployees({ onRehireSuccess, targetMonth, canRehire }) {
     const user = useSelector((state) => state.auth.user);
-    // const employees = useSelector((state) => state.company.employees);
-
-    const { data: employeesData } = useGetAllEmploymentHistoryQuery();
     const [employees, setEmployees] = useState([]);
-
-    // Get employment history data
-    const { data: employmentHistoryData } = useGetAllEmploymentHistoryQuery();
-
-    // Extract all unique user IDs from employment history
-    //  const userIds = employmentHistoryData ? [...new Set(employmentHistoryData.map(eh => eh.employee))] : [];
-
-    // Fetch user data for all users in employment history
-    // const { data: userData } = useGetUserByIdQuery(userIds.join(','), {
-    //     skip: !userIds.length
-    // });
 
     const [open, setOpen] = useState(false);
     const [rehiring, setRehiring] = useState(false);
@@ -82,74 +65,36 @@ function TableRehireEmployees() {
     const [updateEmployee] = useUpdateEmployeeMutation();
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
     const { data, isSuccess } = useGetEmployeesQuery(user.company);
-    const [requiredRehirings, setRequiredTerminations] = useState(5); // Initial count
-
     const departmentOptions = departmentsData ? departmentsData.departments.map(dept => dept.name) : [];
     const availableRoles = [...new Set(employees.map(employee => employee.jobTitle))];
-    const [deleteEmploymentHistory] = useDeleteEmploymentHistoryMutation();
 
     useEffect(() => {
-        if (employmentHistoryData) {
-            const newEmployee = employmentHistoryData.map((emp) => {
-                return {
-                    ...emp._id,
-                    jobTitle: emp.jobTitle,
-                    terminationDate: emp.terminationDate,
-                    hireDate: emp.hireDate,
-                    deptName: emp.department.name,
-                    departmentId: emp.department._id,
-                    salary: emp.salary,
-                    personalEmail: emp.personalEmail,
-                    company: emp.company,
-                    employmentHistoryId: emp._id,
-                }
-            });
-            setEmployees(newEmployee);
+        if (data) {
+            setEmployees(data.employees);
+            dispatch(setEmployeesRedux(data.employees));
         }
-    }, [employees, employmentHistoryData]);
-    // useEffect(() => {
-    //     if (employeesData) {
-    //         dispatch(setEmployees(employeesData));
-    //     }
-    // }, [employees, employeesData, dispatch]);
+    }, [data, dispatch]);
 
+    // console.log(employeesData);
     const handleRehire = async () => {
         if (selectedEmployee) {
             setOpen(false);
             setRehiring(true);
-            console.log(selectedEmployee);
+
             try {
-                // Update the employee details
                 await updateEmployee({
                     ...selectedEmployee,
                     jobTitle: formik.values.jobTitle,
                     salary: formik.values.salary,
                     department: formik.values.department,
-                    departmentName: formik.values.departmentName,
                     hireDate: formik.values.hireDate,
                     terminationDate: null,
-                    company: formik.values.company,
-                    statusType: "Accepted", // Rehire status
                 }).unwrap();
-    
-                // Delete the old employment history for the rehire
-                await deleteEmploymentHistory(selectedEmployee.employmentHistoryId._id);
-    
-                // Update the employee list to reflect the changes
-                setEmployees(prevEmployees =>
-                    prevEmployees.map(employee =>
-                        employee.employmentHistoryId._id === selectedEmployee.employmentHistoryId._id
-                            ? { ...employee, ...formik.values } // Update the selected employee
-                            : employee
-                    )
-                );
-    
-                // Optionally: Refetch data from the server if required
-                // const updatedEmployees = await fetchEmployees(); // Example if you need to refetch data
-                // dispatch(setEmployees(updatedEmployees));
-    
-                formik.resetForm();  // Reset the form
-    
+
+                dispatch(setEmployeesRedux(data.employees));
+                formik.resetForm();
+                const hireDateMonth = dayjs(formik.values.hireDate).format('MMM YYYY');
+                if (onRehireSuccess && hireDateMonth === targetMonth) onRehireSuccess();
             } catch (error) {
                 console.error("Failed to rehire employee:", error);
             } finally {
@@ -158,7 +103,6 @@ function TableRehireEmployees() {
             }
         }
     };
-    
 
     const formik = useFormik({
         initialValues: {
@@ -171,9 +115,7 @@ function TableRehireEmployees() {
             terminationDate: null,
             gender: '',
             department: '',
-            departmentName: '',
             salary: 0,
-            company: '',
         },
         validationSchema: Yup.object().shape({
             firstName: Yup.string().required('First name is required'),
@@ -189,23 +131,20 @@ function TableRehireEmployees() {
         onSubmit: handleRehire,
     });
 
-    const handleOpenDialog = (employee) => {
-        setSelectedEmployee(employee);
+    const handleOpenDialog = (candidate) => {
+        setSelectedEmployee(candidate);
         formik.setValues({
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            email: employee.email,
-            personalEmail: employee.personalEmail,
-            jobTitle: employee.jobTitle,
-            department: employee.departmentId,
-            departmentName: employee.deptName,
-            hireDate: employee.hireDate,
-            salary: employee.salary,
-            gender: employee.gender,
-            terminationDate: employee.terminationDate,
-            company: employee.company,
+            firstName: candidate.firstName,
+            lastName: candidate.lastName,
+            email: candidate.email,
+            personalEmail: candidate.personalEmail || '',
+            jobTitle: candidate.jobTitle || '',
+            department: candidate.department || '',
+            hireDate: candidate.hireDate || dayjs().utc().format(),
+            salary: candidate.salary || 0,
+            gender: candidate.gender || '',
+            terminationDate: candidate.terminationDate || null,
         });
-        console.log(employee);
         setOpen(true);
     };
 
@@ -229,11 +168,11 @@ function TableRehireEmployees() {
             selectedDepartments.length === 0 ||
             departmentsData?.departments
                 .filter((dept) => selectedDepartments.includes(dept.name))
-                .some((dept) => dept.name === employee.deptName);
+                .some((dept) => dept._id === employee.department);
+
         const searchMatches = searchTerm === '' ||
             fullName.includes(searchTermLower) ||
             email.includes(searchTermLower);
-
 
         return (
             employee._id !== user._id &&
@@ -323,23 +262,13 @@ function TableRehireEmployees() {
                 </Stack>
                 <Card sx={{ flex: 2, minWidth: '60%', height: '100%' }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
-                        <Typography variant="h5">Former Employees</Typography>
-                        <Typography
-                            variant="h6"
-                            color={requiredRehirings > 0 ? 'error' : 'success'}
-                        >
-                            {requiredRehirings > 0
-                                ? `Required Rehiring Remaining: ${requiredRehirings}`
-                                : 'Rehiring Is Not Necessary! For Now...'
-                            }
-                        </Typography>
+                        <Typography variant="h5">Candidates</Typography>
                         <TextField
                             placeholder="Search employees..."
                             variant="outlined"
                             size="small"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-
                         />
                     </Stack>
                     <Divider />
@@ -361,11 +290,8 @@ function TableRehireEmployees() {
                                 {filteredEmployees
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((employee) => {
-                                        // Check if employee is scheduled to be hired
                                         const isScheduledForHire = employee.hireDate &&
                                             dayjs(employee.hireDate).isAfter(dayjs(), 'day');
-
-                                        // Check if the termination date is in the future
                                         const isTerminationFutureOrToday = employee.terminationDate &&
                                             dayjs(employee.terminationDate).isAfter(dayjs(), 'day');
 
@@ -375,7 +301,12 @@ function TableRehireEmployees() {
                                                 <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
                                                 <TableCell>{employee.email}</TableCell>
                                                 <TableCell>{employee.jobTitle}</TableCell>
-                                                <TableCell>{employee.deptName}</TableCell>
+                                                <TableCell>
+                                                    {departmentsData &&
+                                                        departmentsData.departments
+                                                            .filter(department => department._id === employee.department)
+                                                            .map(department => department.name)}
+                                                </TableCell>
                                                 <TableCell>{employee.hireDate && dayjs(employee.hireDate).format('DD MMM YYYY')}</TableCell>
                                                 <TableCell>{employee.terminationDate ? dayjs(employee.terminationDate).format('DD MMM YYYY') : 'N/A'}</TableCell>
                                                 <TableCell align="right">
@@ -384,10 +315,12 @@ function TableRehireEmployees() {
                                                         color="primary"
                                                         onClick={() => handleOpenDialog(employee)}
                                                         disabled={
-                                                            selectedEmployee && selectedEmployee._id === employee._id && rehiring ||
+                                                            !canRehire ||
+                                                            (selectedEmployee && selectedEmployee._id === employee._id && rehiring) ||
                                                             isScheduledForHire ||
                                                             isTerminationFutureOrToday
                                                         }
+                                                        title={!canRehire ? 'Rehiring is only available in the current month when required' : ''}
                                                     >
                                                         {selectedEmployee && selectedEmployee._id === employee._id && rehiring
                                                             ? 'Rehiring'
@@ -412,32 +345,6 @@ function TableRehireEmployees() {
                         rowsPerPageOptions={[5, 10, 25]}
                     />
                 </Card>
-                {/* <Card sx={{ flex: 1, minWidth: '30%', height: '100%' }}>
-                    <Stack direction="column" spacing={2} p={2}>
-                        <Typography variant="h6">Top 10 Employees by Experience</Typography>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Name</TableCell>
-                                    <TableCell>Department</TableCell>
-                                    <TableCell align="right">Days Worked</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {experienceRanking.map((employee) => (
-                                    <TableRow key={employee._id}>
-                                        <TableCell>{`${employee.firstName} ${employee.lastName}`}</TableCell>
-                                        <TableCell>
-                                            {departmentsData?.departments
-                                                .find(dept => dept._id === employee.department)?.name || 'N/A'}
-                                        </TableCell>
-                                        <TableCell align="right">{employee.workExperience}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Stack>
-                </Card> */}
 
                 <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
                     <DialogContent>
@@ -513,12 +420,12 @@ function TableRehireEmployees() {
                             <FormControl fullWidth required>
                                 <InputLabel>Department</InputLabel>
                                 <Select
-                                    value={formik.values.department}  // Changed from departmentName
+                                    value={formik.values.department}
                                     onChange={formik.handleChange}
                                     name="department"
                                 >
                                     {departmentsData?.departments.map((department) => (
-                                        <MenuItem key={department._id} value={department._id}> 
+                                        <MenuItem key={department._id} value={department._id}>
                                             {department.name}
                                         </MenuItem>
                                     ))}
@@ -532,7 +439,7 @@ function TableRehireEmployees() {
                                         name="hireDate"
                                         value={formik.values.hireDate ? dayjs(formik.values.hireDate) : null}
                                         onChange={(newValue) => {
-                                            formik.setFieldValue('hireDate', newValue ? newValue.toISOString() : null); // Store ISO string in formik
+                                            formik.setFieldValue('hireDate', newValue ? newValue.toISOString() : null);
                                         }}
                                         required
                                     />

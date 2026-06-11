@@ -51,7 +51,7 @@ dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-function TableTerminateEmployees() {
+function TableTerminateEmployees({ onTerminateSuccess, targetMonth, canTerminate }) {
     const user = useSelector((state) => state.auth.user);
     // const employees = useSelector((state) => state.company.employees);
     const [open, setOpen] = useState(false);
@@ -59,7 +59,6 @@ function TableTerminateEmployees() {
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [confirmationOpen, setConfirmationOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [requiredTerminations, setRequiredTerminations] = useState(1); // Initial count
     const [updateEmployee] = useUpdateEmployeeMutation();
     const [noticePeriod, setNoticePeriod] = useState(null);
     const { data: departmentsData } = useGetDepartmentsQuery(user.company);
@@ -144,8 +143,8 @@ function TableTerminateEmployees() {
                 employees.map(emp => emp._id === selectedEmployee._id ? updatedEmployee : emp)
             ));
 
-            // Decrease the required termination count
-            setRequiredTerminations((prevCount) => Math.max(prevCount - 1, 0));
+            const terminationMonth = dayjs(noticePeriod).format('MMM YYYY');
+            if (onTerminateSuccess && terminationMonth === targetMonth) onTerminateSuccess();
 
             setSelectedEmployee(null); // Reset selected employee
         } catch (error) {
@@ -280,15 +279,6 @@ function TableTerminateEmployees() {
                 <Card sx={{ flex: 2, minWidth: '60%', height: '100%' }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" p={2}>
                         <Typography variant="h5">Employees</Typography>
-                        <Typography
-                            variant="h6"
-                            color={requiredTerminations > 0 ? 'error' : '#31d436'}
-                        >
-                            {requiredTerminations > 0
-                                ? `Termination Required : ${requiredTerminations}`
-                                : 'No Termination Needed!'
-                            }
-                        </Typography>
                         <OutlinedInput
                             placeholder="Search"
                             value={searchTerm}
@@ -374,21 +364,25 @@ function TableTerminateEmployees() {
                                                     </>
                                                 ) : (
                                                     <IconButton
-                                                        onClick={() => handleTerminateClick(employee._id)}
+                                                        onClick={() => canTerminate && handleTerminateClick(employee._id)}
+                                                        disabled={!canTerminate}
                                                         color="error"
+                                                        title={!canTerminate ? 'Termination is only available in the current month when required' : ''}
                                                         sx={{
                                                             border: '2px solid',
-                                                            borderColor: 'error.main',
-                                                            color: 'error',
+                                                            borderColor: canTerminate ? 'error.main' : 'grey.600',
+                                                            color: canTerminate ? 'error' : 'grey.600',
                                                             backgroundColor: 'transparent',
                                                             borderRadius: '8px',
                                                             padding: '6px',
                                                             fontSize: '1rem',
                                                             fontWeight: 'bold',
-                                                            '&:hover': {
+                                                            opacity: canTerminate ? 1 : 0.4,
+                                                            cursor: canTerminate ? 'pointer' : 'not-allowed',
+                                                            '&:hover': canTerminate ? {
                                                                 backgroundColor: 'rgba(255, 0, 0, 1)',
                                                                 color: '#1C2536',
-                                                            },
+                                                            } : {},
                                                         }}
                                                     >
                                                         Terminate
