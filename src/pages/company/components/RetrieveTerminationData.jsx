@@ -1,5 +1,6 @@
 import { Button, Typography, Stack, Paper } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -7,6 +8,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { APPS_API_BASE_URL } from '../../../constants/env';
 
 function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
+    const { token, user } = useSelector((state) => state.auth);
     const currentMonth = dayjs().format('MMM YYYY');
     const [workforceData, setWorkforceData] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -14,7 +16,10 @@ function RetrieveTerminationData({ completedCount, onMonthLoaded }) {
     const fetchTerminationData = async () => {
         try {
             const response = await fetch(`${APPS_API_BASE_URL}/retrieve-workforce-data?type=termination`, {
-                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-User-Email': user?.email || '',
+                },
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
