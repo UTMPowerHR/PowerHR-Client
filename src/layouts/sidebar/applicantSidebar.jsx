@@ -26,8 +26,16 @@ const applicantSection = [
                         title: 'History',
                         path: PATHS.APPLICATION.HISTORY,
                     },
+                    // {
+                    //     title: 'Example',
+                    //     path: PATHS.JOB.EXAMPLE,
+                    // },
                 ],
             },
+            // {
+            //     title: 'Transfer Document',
+            //     path: PATHS.JOB.TRANSFER_DOCUMENT,
+            // },  
         ],
     },
 ];

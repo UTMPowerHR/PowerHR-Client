@@ -153,17 +153,36 @@ export default function Profile() {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('file', selectedFile); // 'file' should match your backend field name
+        //Convert Image to Base64
+        const base64 = await convertToBase64(selectedFile);
+
+        // Prepare the payload
+        const payload = {
+            image: base64, // Base64-encoded image
+            id: user._id, // Assuming `user` is part of the component's state or props
+        };
 
         try {
-            const data = await uploadProfileImageMutation({ formData, id: user._id }).unwrap();
+            const data = await uploadProfileImageMutation(payload).unwrap();
             dispatch(setCredentials({ user: data, token: token }));
             setSelectedFile(null);
         } catch (err) {
             console.error(err);
         }
     };
+
+    function convertToBase64(file){
+        return new Promise((resolve, reject) => {
+            const fileReader = new FileReader();
+            fileReader.readAsDataURL(file);
+            fileReader.onload = () => {
+                resolve(fileReader.result)
+            };
+            fileReader.onerror = (error) => {
+                reject(error)
+            }
+        })
+    }
 
     return (
         <Stack spacing={4}>
